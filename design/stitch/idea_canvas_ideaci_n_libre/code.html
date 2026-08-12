@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Idea Canvas - Lumina</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-container": "#fffbff",
+                        "on-primary-fixed": "#07006c",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "background": "#f8f9ff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#c0c1ff",
+                        "surface-tint": "#494bd6",
+                        "on-background": "#0b1c30",
+                        "secondary-fixed": "#ffdadb",
+                        "on-secondary-fixed-variant": "#92002a",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "surface-container-low": "#eff4ff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#e1e0ff",
+                        "outline-variant": "#c7c4d7",
+                        "surface": "#f8f9ff",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#767586",
+                        "surface-container": "#e5eeff",
+                        "primary": "#4648d4",
+                        "secondary-fixed-dim": "#ffb2b7",
+                        "primary-container": "#6063ee",
+                        "tertiary": "#904900",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-surface": "#0b1c30",
+                        "secondary": "#b90538",
+                        "inverse-surface": "#213145",
+                        "secondary-container": "#dc2c4f",
+                        "on-secondary-fixed": "#40000d",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#d3e4fe",
+                        "surface-container-highest": "#d3e4fe",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "surface-bright": "#f8f9ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-tertiary-fixed": "#301400",
+                        "tertiary-fixed": "#ffdcc5",
+                        "surface-dim": "#cbdbf5",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#464554",
+                        "on-tertiary-container": "#fffbff",
+                        "tertiary-container": "#b55d00",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#fffbff",
+                        "surface-container-high": "#dce9ff",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "grid-margin": "24px",
+                        "cell-padding": "12px",
+                        "base": "8px",
+                        "grid-gutter": "16px",
+                        "stack-sm": "4px",
+                        "stack-lg": "24px",
+                        "stack-md": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "body-sm": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "display": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+        .masonry-grid {
+            column-count: 1;
+            column-gap: 1rem;
+        }
+        @media (min-width: 640px) {
+            .masonry-grid { column-count: 2; }
+        }
+        @media (min-width: 1024px) {
+            .masonry-grid { column-count: 3; }
+        }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1rem;
+        }
+        
+        /* Subtle glow for active/hover states */
+        .hover-glow:hover {
+            box-shadow: 0 8px 24px -4px rgba(70, 72, 212, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col md:flex-row pb-20 md:pb-0">
+<!-- Desktop Sidebar (NavigationDrawer) -->
+<nav class="hidden md:flex w-[280px] h-full fixed left-0 top-0 border-r border-outline-variant/10 bg-surface-container-lowest flex-col gap-stack-md p-grid-margin z-40 transition-all duration-200 ease-in-out">
+<div class="mb-8">
+<h1 class="font-display text-display text-primary">Lumina</h1>
+</div>
+<div class="flex flex-col gap-2">
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-md text-label-md">Calendar</span>
+</a>
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+<span class="font-label-md text-label-md">Tasks</span>
+</a>
+<a class="flex items-center gap-3 p-3 rounded-lg text-primary font-bold bg-surface-container hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="lightbulb" data-weight="fill" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+<span class="font-label-md text-label-md">Idea Canvas</span>
+</a>
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Archive</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-[280px] flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-background z-30 flex justify-between items-center px-grid-margin py-base max-w-full">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-primary p-2 -ml-2 rounded-full hover:bg-surface-container-low active:scale-95 duration-150 transition-colors">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h2 class="font-headline-sm text-headline-sm-mobile md:font-headline-sm md:text-headline-sm text-primary font-bold">Idea Canvas</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant p-2 rounded-full hover:bg-surface-container-low active:scale-95 duration-150 transition-colors">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-md text-label-md cursor-pointer hover:bg-primary-fixed-dim transition-colors">
+                    U
+                </div>
+</div>
+</header>
+<div class="flex-1 px-4 md:px-grid-margin py-8 max-w-5xl mx-auto w-full">
+<!-- Quick Capture Input -->
+<div class="mb-12 relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-primary">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</div>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-lowest border-b border-outline-variant focus:border-primary focus:ring-0 focus:outline-none font-body-lg text-body-lg text-on-background placeholder:text-outline-variant/70 rounded-t-lg transition-all shadow-sm hover-glow" id="quick-capture" placeholder="Quick capture... just start typing" type="text"/>
+<div class="absolute inset-y-0 right-0 pr-2 flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-md shadow-primary/20">
+                        Capture
+                    </button>
+</div>
+</div>
+<!-- Idea Canvas (Masonry Grid) -->
+<div class="masonry-grid" id="idea-container">
+<!-- Idea Card 1 -->
+<div class="masonry-item bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/20 hover-glow transition-all duration-300 relative group">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary rounded-l-xl opacity-80"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="lightbulb" data-weight="fill" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+</div>
+<div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+<button class="text-outline hover:text-primary transition-colors p-1" title="Convert to Folder">
+<span class="material-symbols-outlined text-sm" data-icon="create_new_folder">create_new_folder</span>
+</button>
+<button class="text-outline hover:text-primary transition-colors p-1" title="Add to Calendar">
+<span class="material-symbols-outlined text-sm" data-icon="event_note">event_note</span>
+</button>
+<button class="text-outline hover:text-error transition-colors p-1" title="Delete">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-background leading-relaxed">
+                        Redesign the onboarding flow to feel more like a friendly conversation rather than a form submission. Maybe use progressive disclosure.
+                    </p>
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="text-xs px-2 py-1 bg-surface-container-low text-on-surface-variant rounded-md font-label-sm">UX Design</span>
+</div>
+</div>
+<!-- Idea Card 2 -->
+<div class="masonry-item bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/20 hover-glow transition-all duration-300 relative group">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-container rounded-l-xl opacity-80"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined text-sm" data-icon="lightbulb" data-weight="fill" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+</div>
+<div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+<button class="text-outline hover:text-primary transition-colors p-1" title="Convert to Folder">
+<span class="material-symbols-outlined text-sm" data-icon="create_new_folder">create_new_folder</span>
+</button>
+<button class="text-outline hover:text-primary transition-colors p-1" title="Add to Calendar">
+<span class="material-symbols-outlined text-sm" data-icon="event_note">event_note</span>
+</button>
+<button class="text-outline hover:text-error transition-colors p-1" title="Delete">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-background leading-relaxed">
+                        Plant a small herb garden on the kitchen windowsill. Basil, mint, and maybe some thyme. Need to buy pots this weekend.
+                    </p>
+</div>
+<!-- Idea Card 3 -->
+<div class="masonry-item bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/20 hover-glow transition-all duration-300 relative group">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary rounded-l-xl opacity-80"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-sm" data-icon="lightbulb" data-weight="fill" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+</div>
+<div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+<button class="text-outline hover:text-primary transition-colors p-1" title="Convert to Folder">
+<span class="material-symbols-outlined text-sm" data-icon="create_new_folder">create_new_folder</span>
+</button>
+<button class="text-outline hover:text-primary transition-colors p-1" title="Add to Calendar">
+<span class="material-symbols-outlined text-sm" data-icon="event_note">event_note</span>
+</button>
+<button class="text-outline hover:text-error transition-colors p-1" title="Delete">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-background leading-relaxed">
+                        Blog post idea: "The myth of time management in a reactive environment." Outline the paradox of planning when constant interruptions are the norm.
+                    </p>
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="text-xs px-2 py-1 bg-surface-container-low text-on-surface-variant rounded-md font-label-sm">Writing</span>
+<span class="text-xs px-2 py-1 bg-surface-container-low text-on-surface-variant rounded-md font-label-sm">Productivity</span>
+</div>
+</div>
+<!-- Idea Card 4 -->
+<div class="masonry-item bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/20 hover-glow transition-all duration-300 relative group">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary rounded-l-xl opacity-80"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="lightbulb" data-weight="fill" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+</div>
+<div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+<button class="text-outline hover:text-primary transition-colors p-1" title="Convert to Folder">
+<span class="material-symbols-outlined text-sm" data-icon="create_new_folder">create_new_folder</span>
+</button>
+<button class="text-outline hover:text-primary transition-colors p-1" title="Add to Calendar">
+<span class="material-symbols-outlined text-sm" data-icon="event_note">event_note</span>
+</button>
+<button class="text-outline hover:text-error transition-colors p-1" title="Delete">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-background leading-relaxed">
+                        Look into local pottery classes for next month. Could be a nice creative outlet away from screens.
+                    </p>
+</div>
+</div>
+<!-- Empty State (Hidden by default, shown via JS if no ideas) -->
+<div class="hidden flex-col items-center justify-center py-20 text-center" id="empty-state">
+<div class="w-32 h-32 mb-6 opacity-50 relative">
+<span class="material-symbols-outlined text-6xl text-outline-variant absolute inset-0 flex items-center justify-center" data-icon="lightbulb">lightbulb</span>
+<div class="absolute inset-0 bg-primary/5 rounded-full blur-xl"></div>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface-variant mb-2">A blank canvas for your thoughts</h3>
+<p class="font-body-md text-body-md text-outline max-w-md mx-auto">Start typing above to clear your mind. No need to schedule or organize yet—just capture it.</p>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden bg-surface-container-lowest shadow-[0_-4px_16px_rgba(70,72,212,0.08)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 scale-98 active:scale-95 duration-200 hover:bg-surface-container-high rounded-xl" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="today">today</span>
+<span class="font-label-sm text-label-sm">Day</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 scale-98 active:scale-95 duration-200 hover:bg-surface-container-high rounded-xl" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="assignment">assignment</span>
+<span class="font-label-sm text-label-sm">Tasks</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 scale-98 active:scale-95 duration-200 shadow-sm" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="tips_and_updates" data-weight="fill" style="font-variation-settings: 'FILL' 1;">tips_and_updates</span>
+<span class="font-label-sm text-label-sm font-semibold">Ideas</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 scale-98 active:scale-95 duration-200 hover:bg-surface-container-high rounded-xl" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</a>
+</nav>
+<script>
+        // Simple script to toggle empty state for demonstration
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('idea-container');
+            const emptyState = document.getElementById('empty-state');
+            
+            // Uncomment to test empty state
+            // container.style.display = 'none';
+            // emptyState.style.display = 'flex';
+        });
+    </script>
+</body></html>

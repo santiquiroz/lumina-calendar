@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Brain Dump - Lumina Calendar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-container": "#6063ee",
+                        "surface": "#f8f9ff",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "tertiary": "#904900",
+                        "primary-fixed": "#e1e0ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-surface-variant": "#464554",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#dce9ff",
+                        "outline": "#767586",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#b90538",
+                        "surface-container-low": "#eff4ff",
+                        "background": "#f8f9ff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "inverse-surface": "#213145",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "secondary-fixed": "#ffdadb",
+                        "on-secondary-fixed-variant": "#92002a",
+                        "on-secondary-fixed": "#40000d",
+                        "surface-bright": "#f8f9ff",
+                        "inverse-primary": "#c0c1ff",
+                        "on-primary-fixed": "#07006c",
+                        "tertiary-container": "#b55d00",
+                        "on-secondary": "#ffffff",
+                        "primary": "#4648d4",
+                        "surface-tint": "#494bd6",
+                        "on-tertiary-fixed": "#301400",
+                        "surface-container": "#e5eeff",
+                        "on-surface": "#0b1c30",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-tertiary-container": "#fffbff",
+                        "secondary-fixed-dim": "#ffb2b7",
+                        "on-primary-container": "#fffbff",
+                        "outline-variant": "#c7c4d7",
+                        "on-secondary-container": "#fffbff",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-background": "#0b1c30",
+                        "surface-container-highest": "#d3e4fe",
+                        "secondary-container": "#dc2c4f",
+                        "surface-variant": "#d3e4fe"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "cell-padding": "12px",
+                        "stack-lg": "24px",
+                        "base": "8px",
+                        "grid-margin": "24px",
+                        "grid-gutter": "16px",
+                        "stack-md": "12px",
+                        "stack-sm": "4px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "body-sm": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "display": ["Hanken Grotesk"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                        "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "headline-lg-mobile": ["28px", { lineHeight: "36px", fontWeight: "600" }],
+                        "label-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "label-md": ["14px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                        "display": ["48px", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .indent-line {
+            position: absolute;
+            left: -12px;
+            top: 24px;
+            bottom: -8px;
+            width: 1px;
+            background-color: theme('colors.outline-variant');
+            opacity: 0.5;
+        }
+        .task-input:focus {
+            outline: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen flex flex-col md:flex-row">
+<!-- Mobile Top App Bar (Hidden on Desktop) -->
+<header class="flex justify-between items-center px-grid-margin py-base w-full bg-surface md:hidden sticky top-0 z-40">
+<button class="p-2 hover:bg-surface-container-low transition-colors rounded-full active:opacity-80 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-primary font-semibold">Brain Dump</h1>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A close up portrait of a young professional smiling slightly, shot in soft natural light against a neutral background. The lighting highlights a gentle, approachable demeanor suitable for a clean, modern interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq3AWlifS5kT3RA4SoOrvkLQuhw8rIhqsWQqSRzDMoatIwCs5ytHkCSor2_fnvTbCokvShkeOzQCuAsesTx2XHLVO6ywHaHZAe4uJP-N_VJOkhgbZoJMvS4WGYevsmc4K2gHeUkN5OnNMIp9qgz1U87Qy28iNJF9HeNd37MyRdNo9sXJv9DZK1kj3HuwbFRACFzy1W4KVWoBlrby5pk8kh4lmKHrj1UHzx3oQWaLhWb2oH4mAutKnXvA"/>
+</div>
+</header>
+<!-- Navigation Drawer (Desktop) -->
+<nav class="hidden md:flex flex-col h-screen py-stack-lg px-grid-gutter h-full w-[280px] bg-surface-container-low sticky top-0 flex-shrink-0">
+<div class="flex items-center gap-3 mb-stack-lg px-cell-padding">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest overflow-hidden flex-shrink-0">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A close up portrait of a young professional smiling slightly, shot in soft natural light against a neutral background. The lighting highlights a gentle, approachable demeanor suitable for a clean, modern interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBunFZLy5jtLz0AvjVvdWDeQEKzzs5frp46v99Fzbep2mbic0h4MJHfNnPKqxyIMnnB1XWAX80YtEauRYnJ2Ci-osvs7jpkmf53Oqr_27mNwqiberDeaZz4U9rkLCm6D8t3Wg80VBFER988DBR65mZJNxGi1PvJMEQ4Xmbt4BCrVsLIcIeQCClyZPx4W9azjKWMTuGcBf9B8u4ymIHK9yBl-aTNjwCBeMlVdCOgnnYQeTTRnCsdX4Cy0A"/>
+</div>
+<div class="flex-1 min-w-0">
+<h2 class="font-headline-sm text-headline-sm text-on-surface truncate">Alex Rivers</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Personal Planner</p>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-2 overflow-y-auto">
+<a class="flex items-center gap-3 py-3 px-cell-padding text-on-surface-variant hover:bg-surface-variant/20 transition-all duration-150 ease-in-out rounded-full font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">circle</span>
+<span>Personal</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-cell-padding text-on-surface-variant hover:bg-surface-variant/20 transition-all duration-150 ease-in-out rounded-full font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">circle</span>
+<span>Work</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-cell-padding text-on-surface-variant hover:bg-surface-variant/20 transition-all duration-150 ease-in-out rounded-full font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">circle</span>
+<span>Family</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-cell-padding text-on-surface-variant hover:bg-surface-variant/20 transition-all duration-150 ease-in-out rounded-full font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">circle</span>
+<span>Project Alpha</span>
+</a>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col w-full max-w-4xl mx-auto px-grid-gutter md:px-grid-margin py-stack-lg pb-32 md:pb-stack-lg min-h-screen">
+<!-- Header / Stats -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-stack-lg gap-4">
+<div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface hidden md:block">Mind Sweep</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Empty your thoughts. Fast, frictionless capture.</p>
+</div>
+<div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+<div class="bg-surface-container py-2 px-4 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">checklist</span>
+<span class="font-label-md text-label-md text-primary">24 Items Captured</span>
+</div>
+<button class="font-label-md text-label-md text-primary hover:opacity-80 transition-colors flex items-center gap-1 mr-2">
+<span class="material-symbols-outlined text-sm">sync</span>
+    Sync to Calendar
+</button><button class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">clear_all</span>
+                    Clear Mind
+                </button>
+</div>
+</div>
+<!-- The List Area -->
+<div class="flex-1 flex flex-col gap-2 relative bg-surface rounded-xl p-4 shadow-sm border border-surface-container-low" id="task-list">
+<!-- Root Level Item 1 -->
+<div class="group flex flex-col relative" data-level="0">
+<div class="flex items-start gap-3 py-2">
+<div class="pt-1 flex-shrink-0 cursor-pointer text-outline-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">drag_indicator</span>
+</div>
+<div class="pt-1 flex-shrink-0">
+<div class="w-4 h-4 rounded-full border-2 border-outline-variant group-hover:border-primary transition-colors cursor-pointer flex items-center justify-center"></div>
+</div>
+<input class="task-input flex-1 bg-transparent border-none p-0 font-body-md text-body-md text-on-surface focus:ring-0 placeholder-outline" placeholder="Add a thought..." type="text" value="Finalize Q3 Marketing Budget"/><button class="p-1 text-outline-variant hover:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">calendar_add_on</span>
+</button>
+</div>
+<!-- Sub-items Container -->
+<div class="pl-7 relative flex flex-col gap-1">
+<div class="indent-line"></div>
+<!-- Nested Item 1.1 -->
+<div class="group flex flex-col relative" data-level="1">
+<div class="flex items-start gap-3 py-1">
+<div class="pt-1 flex-shrink-0 cursor-pointer text-outline-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-[16px]">drag_indicator</span>
+</div>
+<div class="pt-[6px] flex-shrink-0">
+<div class="w-3 h-3 rounded-full border-2 border-outline-variant group-hover:border-primary transition-colors cursor-pointer"></div>
+</div>
+<input class="task-input flex-1 bg-transparent border-none p-0 font-body-md text-body-md text-on-surface focus:ring-0 placeholder-outline" placeholder="Add a sub-thought..." type="text" value="Review ad spend with agency"/><button class="p-1 text-outline-variant hover:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">calendar_add_on</span>
+</button>
+</div>
+</div>
+<!-- Nested Item 1.2 -->
+<div class="group flex flex-col relative" data-level="1">
+<div class="flex items-start gap-3 py-1">
+<div class="pt-1 flex-shrink-0 cursor-pointer text-outline-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-[16px]">drag_indicator</span>
+</div>
+<div class="pt-[6px] flex-shrink-0">
+<div class="w-3 h-3 rounded-full border-2 border-outline-variant group-hover:border-primary transition-colors cursor-pointer"></div>
+</div>
+<input class="task-input flex-1 bg-transparent border-none p-0 font-body-md text-body-md text-on-surface focus:ring-0 placeholder-outline" placeholder="Add a sub-thought..." type="text" value="Approve new creative assets"/><button class="p-1 text-outline-variant hover:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">calendar_add_on</span>
+</button>
+</div>
+<!-- Deeply Nested Container -->
+<div class="pl-7 relative flex flex-col gap-1">
+<div class="indent-line"></div>
+<!-- Deeply Nested Item 1.2.1 -->
+<div class="group flex flex-col relative" data-level="2">
+<div class="flex items-start gap-3 py-1">
+<div class="pt-1 flex-shrink-0 cursor-pointer text-outline-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-[16px]">drag_indicator</span>
+</div>
+<div class="pt-[6px] flex-shrink-0">
+<div class="w-[10px] h-[10px] rounded-full bg-outline-variant group-hover:bg-primary transition-colors cursor-pointer"></div>
+</div>
+<input class="task-input flex-1 bg-transparent border-none p-0 font-body-md text-body-md text-on-surface-variant focus:ring-0 placeholder-outline" placeholder="Add a note..." type="text" value="Need higher res versions for print"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Root Level Item 2 -->
+<div class="group flex flex-col relative mt-2" data-level="0">
+<div class="flex items-start gap-3 py-2">
+<div class="pt-1 flex-shrink-0 cursor-pointer text-outline-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-[18px]">drag_indicator</span>
+</div>
+<div class="pt-1 flex-shrink-0">
+<div class="w-4 h-4 rounded-full border-2 border-outline-variant group-hover:border-primary transition-colors cursor-pointer flex items-center justify-center"></div>
+</div>
+<input class="task-input flex-1 bg-transparent border-none p-0 font-body-md text-body-md text-on-surface focus:ring-0 placeholder-outline" placeholder="Add a thought..." type="text" value="Call mom for her birthday"/><button class="p-1 text-outline-variant hover:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">calendar_add_on</span>
+</button>
+</div>
+</div>
+<!-- Root Level Item 3 -->
+<div class="group flex flex-col relative mt-2" data-level="0">
+<div class="flex items-start gap-3 py-2">
+<div class="pt-1 flex-shrink-0 cursor-pointer text-outline-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-[18px]">drag_indicator</span>
+</div>
+<div class="pt-1 flex-shrink-0">
+<div class="w-4 h-4 rounded-full border-2 border-outline-variant group-hover:border-primary transition-colors cursor-pointer flex items-center justify-center"></div>
+</div>
+<input autofocus="" class="task-input flex-1 bg-transparent border-none p-0 font-body-md text-body-md text-on-surface focus:ring-0 placeholder-outline" placeholder="Type and press Enter..." type="text" value=""/>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile only, hidden on main capture screens if requested, but JSON demands it be considered. Given 'Brain Dump' is a focused tool, we might suppress it, but JSON says only linear/transactional suppress. Brain Dump might be a destination. We will include it as requested by JSON for mobile) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-base pb-safe pt-2 bg-surface shadow-[0_-4px_16px_rgba(73,75,214,0.08)] rounded-t-xl md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">calendar_month</span>
+<span class="font-label-sm text-label-sm mt-1">Month</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">view_agenda</span>
+<span class="font-label-sm text-label-sm mt-1">Agenda</span>
+</a>
+<!-- The 'Add' tab is active since this is the capture/add screen equivalent -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<span class="font-label-sm text-label-sm mt-1">Add</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-label-sm text-label-sm mt-1">Settings</span>
+</a>
+</nav>
+<script>
+        // Minimal script to demonstrate the Enter key behavior for quick capture
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('task-input') && e.key === 'Enter') {
+                e.preventDefault();
+                const currentWrapper = e.target.closest('.group');
+                const level = currentWrapper.getAttribute('data-level');
+                
+                // Very basic clone for demo purposes
+                const clone = currentWrapper.cloneNode(true);
+                const input = clone.querySelector('input');
+                input.value = '';
+                input.placeholder = 'New thought...';
+                
+                // Clear out any nested items in the clone so we just get a fresh line
+                const nestedContainer = clone.querySelector('.pl-7');
+                if(nestedContainer) {
+                    nestedContainer.remove();
+                }
+
+                currentWrapper.parentNode.insertBefore(clone, currentWrapper.nextSibling);
+                input.focus();
+            }
+        });
+    </script>
+</body></html>

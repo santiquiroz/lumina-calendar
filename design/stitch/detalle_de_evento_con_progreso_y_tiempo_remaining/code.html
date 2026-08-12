@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Event Detail - Outliner</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#dce9ff",
+                    "primary-fixed": "#e1e0ff",
+                    "on-tertiary-fixed-variant": "#703700",
+                    "surface-variant": "#d3e4fe",
+                    "primary-container": "#6063ee",
+                    "secondary-fixed": "#ffdadb",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed-variant": "#92002a",
+                    "outline": "#767586",
+                    "on-background": "#0b1c30",
+                    "on-tertiary-container": "#fffbff",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "on-secondary-container": "#fffbff",
+                    "on-surface-variant": "#464554",
+                    "on-secondary": "#ffffff",
+                    "surface-container-highest": "#d3e4fe",
+                    "secondary": "#b90538",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#e5eeff",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "tertiary-container": "#b55d00",
+                    "on-tertiary-fixed": "#301400",
+                    "on-primary-fixed": "#07006c",
+                    "tertiary": "#904900",
+                    "surface-container-lowest": "#ffffff",
+                    "primary": "#4648d4",
+                    "on-primary-container": "#fffbff",
+                    "inverse-surface": "#213145",
+                    "surface": "#f8f9ff",
+                    "inverse-primary": "#c0c1ff",
+                    "on-error": "#ffffff",
+                    "surface-bright": "#f8f9ff",
+                    "on-surface": "#0b1c30",
+                    "surface-tint": "#494bd6",
+                    "secondary-fixed-dim": "#ffb2b7",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#eff4ff",
+                    "on-secondary-fixed": "#40000d",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "secondary-container": "#dc2c4f",
+                    "outline-variant": "#c7c4d7",
+                    "background": "#f8f9ff",
+                    "tertiary-fixed": "#ffdcc5",
+                    "surface-dim": "#cbdbf5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-md": "12px",
+                    "cell-padding": "12px",
+                    "grid-margin": "24px",
+                    "base": "8px",
+                    "stack-sm": "4px",
+                    "grid-gutter": "16px",
+                    "stack-lg": "24px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "body-sm": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"],
+                    "display": ["Hanken Grotesk"],
+                    "headline-sm": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"],
+                    "label-md": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "label-sm": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom styles for the outliner to hide scrollbars but allow scrolling if needed */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Outline placeholder styling */
+        [contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: #767586; /* outline color */
+            pointer-events: none;
+            display: block; /* For Firefox */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+  .task-row:has(input:checked) .task-text {
+    text-decoration: line-through;
+    opacity: 0.5;
+  }
+  .custom-checkbox {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid #c7c4d7;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    background: transparent;
+  }
+  .custom-checkbox:checked {
+    background-color: #4648d4;
+    border-color: #4648d4;
+  }
+  .custom-checkbox:checked::after {
+    content: 'check';
+    font-family: 'Material Symbols Outlined';
+    font-size: 14px;
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+</style></head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col relative selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation (Task-focused, overriding JSON shell) -->
+<header class="flex justify-between items-center px-grid-margin py-base w-full sticky top-0 bg-surface/90 backdrop-blur-sm z-20 border-b border-outline-variant/20">
+<a class="p-2 hover:bg-surface-container-low active:scale-95 rounded-full transition-all text-on-surface-variant flex items-center justify-center" href="{{DATA:SCREEN:SCREEN_5}}">
+<span class="material-symbols-outlined">arrow_back</span>
+</a>
+<div class="flex gap-1">
+<button class="p-2 hover:bg-surface-container-low active:scale-95 rounded-full transition-all text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low active:scale-95 rounded-full transition-all text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</header>
+<!-- Event Header -->
+<main class="flex-1 flex flex-col w-full max-w-3xl mx-auto pb-32">
+<div class="px-grid-margin pt-stack-md pb-stack-lg">
+<h1 class="font-headline-lg md:font-display text-headline-lg md:text-display text-on-surface mb-stack-md tracking-tight">Folder: Design Review: Q4 Roadmap</h1>
+<div class="flex flex-wrap items-center gap-4 text-on-surface-variant font-body-sm text-body-sm mb-stack-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 18px;">calendar_today</span>
+<span class="">Wed, Oct 25 • 2:00 PM - 3:30 PM</span>
+</div>
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined" style="font-size: 18px;">videocam</span>
+<span class="font-label-md text-label-md cursor-pointer hover:underline">Join Meeting</span>
+</div>
+</div>
+<!-- Event Chips -->
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container rounded-full font-label-sm text-label-sm text-on-surface-variant border-l-4 border-primary">
+                    Project Alpha
+                </span>
+<span class="px-3 py-1 bg-surface-container rounded-full font-label-sm text-label-sm text-on-surface-variant">
+                    Design
+                </span>
+</div>
+</div>
+<hr class="border-outline-variant/30 mx-grid-margin mb-stack-lg"/><div class="px-grid-margin mb-stack-lg flex flex-col gap-3">
+<!-- Time Remaining Bar -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-label-sm font-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size: 14px;">schedule</span>Time Remaining</span>
+<span class="text-primary font-label-md">45m remaining</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 50%;"></div>
+</div>
+</div>
+<!-- Task Progress Bar -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-label-sm font-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size: 14px;">checklist</span>Task Progress</span>
+<span class="text-primary font-label-md">0%</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 0%;"></div>
+</div>
+</div>
+</div>
+<!-- Outliner / Notes Section -->
+<div class="px-grid-margin flex-1"><div class="flex flex-col gap-8"><section><div class="flex items-center gap-2 mb-4 text-primary"><span class="material-symbols-outlined">list_alt</span><h2 class="font-headline-sm text-headline-sm">Metrics &amp; Analysis</h2></div><div class="flex flex-col gap-1"><div class="group relative flex flex-col"><div class="flex items-start py-1 pl-6 relative group/row"><button class="absolute left-0 top-1.5 opacity-0 group-hover/row:opacity-100 text-outline hover:text-on-surface transition-opacity flex items-center justify-center w-5 h-5"><span class="material-symbols-outlined" style="font-size: 20px;">arrow_drop_down</span></button><div class="task-row flex items-start flex-1"><input class="custom-checkbox mt-1.5 mr-3 shrink-0" type="checkbox"/><div class="task-text flex-1 font-body-md text-body-md text-on-surface outline-none min-h-[24px] py-0.5 break-words">Review Q3 Design Metrics</div></div></div><div class="pl-8 flex flex-col gap-1 mt-1 border-l border-outline-variant/20 ml-2.5"><div class="flex items-start py-1 pl-6 relative group/row"><div class="task-row flex items-start flex-1"><input class="custom-checkbox mt-1.5 mr-3 shrink-0" type="checkbox"/><div class="task-text flex-1 font-body-md text-body-md text-on-surface outline-none min-h-[24px] py-0.5 break-words">User engagement up 15% following the new calendar grid update<span class="material-symbols-outlined text-primary ml-2.5" style="font-size: 16px; vertical-align: middle;">repeat</span></div></div></div><div class="flex items-start py-1 pl-6 relative group/row"><div class="task-row flex items-start flex-1"><input class="custom-checkbox mt-1.5 mr-3 shrink-0" type="checkbox"/><div class="task-text flex-1 font-body-md text-body-md text-on-surface outline-none min-h-[24px] py-0.5 break-words">Identify friction points in the event creation flow (specifically on mobile)<span class="material-symbols-outlined text-primary ml-2.5" style="font-size: 16px; vertical-align: middle;">repeat</span></div></div></div></div></div></div></section><section><div class="flex items-center gap-2 mb-4 text-primary"><span class="material-symbols-outlined">list_alt</span><h2 class="font-headline-sm text-headline-sm">Planning &amp; Execution</h2></div><div class="flex flex-col gap-1"><div class="group relative flex flex-col"><div class="flex items-start py-1 pl-6 relative group/row"><button class="absolute left-0 top-1.5 opacity-100 text-outline hover:text-on-surface transition-opacity flex items-center justify-center w-5 h-5"><span class="material-symbols-outlined" style="font-size: 20px;">arrow_right</span></button><div class="task-row flex items-start flex-1 bg-primary/5 rounded-sm px-1 -ml-1"><input class="custom-checkbox mt-1.5 mr-3 shrink-0" type="checkbox"/><div class="task-text flex-1 font-body-md text-body-md text-on-surface outline-none min-h-[24px] py-0.5 break-words">Q4 Feature Proposals</div></div></div></div><div class="group relative flex flex-col mt-2"><div class="flex items-start py-1 pl-6 relative group/row"><button class="absolute left-0 top-1.5 opacity-0 group-hover/row:opacity-100 text-outline hover:text-on-surface transition-opacity flex items-center justify-center w-5 h-5"><span class="material-symbols-outlined" style="font-size: 20px;">arrow_drop_down</span></button><div class="task-row flex items-start flex-1"><input class="custom-checkbox mt-1.5 mr-3 shrink-0" type="checkbox"/><div class="task-text flex-1 font-body-md text-body-md text-on-surface outline-none min-h-[24px] py-0.5 break-words">Action Items</div></div></div><div class="pl-8 flex flex-col gap-1 mt-1 border-l border-outline-variant/20 ml-2.5"><div class="flex items-start py-1 pl-6 relative group/row"><div class="task-row flex items-start flex-1"><input class="custom-checkbox mt-1.5 mr-3 shrink-0" type="checkbox"/><div class="task-text flex-1 font-body-md text-body-md text-on-surface outline-none min-h-[24px] py-0.5 break-words">Finalize typography tokens for the new dark mode<span class="material-symbols-outlined text-primary ml-2.5" style="font-size: 16px; vertical-align: middle;">repeat</span></div></div></div></div></div></div></section></div></div>
+</main>
+<!-- Bottom Formatting Toolbar -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-container-highest/80 backdrop-blur-xl shadow-md rounded-full px-4 py-2 flex items-center gap-2 z-50 border border-outline-variant/30">
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-variant text-on-surface-variant hover:text-on-surface rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" style="font-size: 20px;">format_bold</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-variant text-on-surface-variant hover:text-on-surface rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" style="font-size: 20px;">format_italic</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-variant text-on-surface-variant hover:text-on-surface rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" style="font-size: 20px;">format_underlined</span>
+</button>
+<div class="w-px h-5 bg-outline-variant/50 mx-1"></div>
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-variant text-on-surface-variant hover:text-on-surface rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" style="font-size: 20px;">link</span>
+</button>
+<div class="w-px h-5 bg-outline-variant/50 mx-1"></div>
+<button aria-label="Indent decrease" class="w-10 h-10 flex items-center justify-center hover:bg-surface-variant text-on-surface-variant hover:text-on-surface rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" style="font-size: 20px;">format_indent_decrease</span>
+</button>
+<button aria-label="Indent increase" class="w-10 h-10 flex items-center justify-center hover:bg-surface-variant text-on-surface-variant hover:text-on-surface rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" style="font-size: 20px;">format_indent_increase</span>
+</button>
+</div>
+<div class="fixed inset-0 z-50 flex items-end justify-center bg-on-surface/20 backdrop-blur-sm transition-opacity opacity-0 pointer-events-none" id="recurring-dialog" style="transition: opacity 0.3s ease;"><div class="w-full max-w-3xl bg-surface rounded-t-xl p-6 shadow-md transform translate-y-full transition-transform duration-300 ease-out" style="margin-bottom: 0;"><div class="flex flex-col gap-4"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-primary">event_repeat</span><h3 class="font-headline-sm text-headline-sm text-on-surface">¿Quieres que esta tarea se repita?</h3></div><p class="text-body-md text-on-surface-variant">Puedes marcar esta tarea como completada una sola vez o configurarla para que vuelva a aparecer automáticamente.</p><div class="flex flex-col gap-2 mt-2"><button class="w-full py-3 px-4 bg-primary text-on-primary rounded-full font-label-md text-label-md hover:opacity-90 transition-all active:scale-95">Completar y repetir</button><button class="w-full py-3 px-4 bg-surface-container-high text-on-surface rounded-full font-label-md text-label-md hover:bg-surface-variant transition-all active:scale-95">Solo completar</button></div></div></div></div><script>document.querySelectorAll('.custom-checkbox').forEach(checkbox => { checkbox.addEventListener('change', function() { if(this.checked) { const dialog = document.getElementById('recurring-dialog'); const sheet = dialog.querySelector('div'); dialog.classList.remove('opacity-0', 'pointer-events-none'); sheet.classList.remove('translate-y-full'); } }); });</script>
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-base pb-safe pt-2 bg-surface shadow-[0_-4px_16px_rgba(73,75,214,0.08)] rounded-t-xl pb-4"><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200 w-16" href="{{DATA:SCREEN:SCREEN_19}}"><span class="material-symbols-outlined mb-1" data-icon="calendar_month">calendar_month</span><span class="font-label-sm text-label-sm">Month</span></a><a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 duration-200" href="{{DATA:SCREEN:SCREEN_5}}"><span class="material-symbols-outlined mb-1" data-icon="view_agenda" data-weight="fill">view_agenda</span><span class="font-label-sm text-label-sm">Agenda</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200 w-16" href="#"><span class="material-symbols-outlined mb-1" data-icon="add_circle">add_circle</span><span class="font-label-sm text-label-sm">Add</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200 w-16" href="#"><span class="material-symbols-outlined mb-1" data-icon="settings">settings</span><span class="font-label-sm text-label-sm">Settings</span></a></nav></body></html>

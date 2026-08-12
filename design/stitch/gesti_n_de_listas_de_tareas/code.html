@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Task Lists Management - Lumina Calendar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#213145",
+                    "on-tertiary": "#ffffff",
+                    "primary-container": "#6063ee",
+                    "on-secondary-fixed": "#40000d",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#07006c",
+                    "surface-container-low": "#eff4ff",
+                    "surface-container-high": "#dce9ff",
+                    "surface-tint": "#494bd6",
+                    "outline": "#767586",
+                    "secondary-container": "#dc2c4f",
+                    "on-error": "#ffffff",
+                    "inverse-primary": "#c0c1ff",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "surface-container": "#e5eeff",
+                    "outline-variant": "#c7c4d7",
+                    "surface-dim": "#cbdbf5",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "on-surface": "#0b1c30",
+                    "on-tertiary-container": "#fffbff",
+                    "on-surface-variant": "#464554",
+                    "on-tertiary-fixed": "#301400",
+                    "background": "#f8f9ff",
+                    "secondary-fixed": "#ffdadb",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "inverse-on-surface": "#eaf1ff",
+                    "tertiary": "#904900",
+                    "on-background": "#0b1c30",
+                    "tertiary-container": "#b55d00",
+                    "surface-variant": "#d3e4fe",
+                    "on-secondary-fixed-variant": "#92002a",
+                    "surface-container-highest": "#d3e4fe",
+                    "primary": "#4648d4",
+                    "on-primary-container": "#fffbff",
+                    "on-tertiary-fixed-variant": "#703700",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "primary-fixed": "#e1e0ff",
+                    "surface-bright": "#f8f9ff",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed": "#ffdcc5",
+                    "error": "#ba1a1a",
+                    "on-secondary-container": "#fffbff",
+                    "surface": "#f8f9ff",
+                    "secondary-fixed-dim": "#ffb2b7",
+                    "secondary": "#b90538"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "cell-padding": "12px",
+                    "stack-sm": "4px",
+                    "stack-md": "12px",
+                    "stack-lg": "24px",
+                    "grid-gutter": "16px",
+                    "base": "8px",
+                    "grid-margin": "24px"
+            },
+            "fontFamily": {
+                    "display": ["Hanken Grotesk"],
+                    "label-sm": ["Hanken Grotesk"],
+                    "label-md": ["Hanken Grotesk"],
+                    "body-sm": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"],
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "headline-sm": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col md:flex-row pb-[80px] md:pb-0">
+<!-- TopAppBar (Mobile & Web Header) -->
+<header class="bg-surface dark:bg-surface w-full top-0 flat no shadows flex justify-between items-center px-grid-margin py-base w-full sticky z-40">
+<button aria-label="Menu" class="text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full p-2 active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed-dim">September 2023</h1>
+<button aria-label="User profile" class="hover:bg-surface-container-low transition-colors rounded-full overflow-hidden w-10 h-10 active:opacity-80 transition-opacity">
+<img alt="User profile photo" class="object-cover w-full h-full" data-alt="A close up, soft focus portrait of a person with a warm, gentle smile. The lighting is light-mode, bright, airy, and minimalist, consistent with a calm professional avatar in a sleek calendar application. The color palette features light pastel blues and warm skin tones against a pristine white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuByNY9Qf5aRELhnjLJ4Dz6yM0C2pHlhqW9RNJxbazBWDXpNG3Vi2s3zhMU2dis6ZtNjvkPRS4Aki78BLaeLzayhM3Nbv0qhtQPuTZKLvJ_cnaikYQH07QiZfHGqK5nvZ7kIujoI65sBMlbINmG2R3_-RNvUaWr80-iuINvmpwLntYONEln-krRq3GnQugLzdHpiJtpwGpqkneX3iGsv8C_3FMR4QV78PTfL4mJlZqfc-vLur9MrivRJgA"/>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-grid-margin py-stack-lg max-w-4xl mx-auto w-full">
+<div class="flex justify-between items-end mb-stack-lg">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-stack-sm">Task Lists</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage and organize your tasks.</p>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="hidden sm:inline">Add New List</span>
+</button>
+</div>
+<!-- Bento Grid for Task Lists -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-grid-gutter">
+<!-- List Card: Trabajo -->
+<div class="bg-surface-container-low rounded-xl p-grid-gutter relative overflow-hidden group hover:bg-surface-container-high transition-colors cursor-pointer border border-transparent hover:border-outline-variant/30">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex justify-between items-start mb-stack-md">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">work</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Trabajo</h3>
+</div>
+<button aria-label="More options" class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-md">12 tareas, 5 pendientes</p>
+<div class="w-full bg-surface-variant rounded-full h-2 mb-1 overflow-hidden">
+<div class="bg-primary h-2 rounded-full" style="width: 58%"></div>
+</div>
+<div class="flex justify-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant">58%</span>
+</div>
+</div>
+<!-- List Card: Personal -->
+<div class="bg-surface-container-low rounded-xl p-grid-gutter relative overflow-hidden group hover:bg-surface-container-high transition-colors cursor-pointer border border-transparent hover:border-outline-variant/30">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary-container"></div>
+<div class="flex justify-between items-start mb-stack-md">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container/10 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined">person</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Personal</h3>
+</div>
+<button aria-label="More options" class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-md">8 tareas, 2 pendientes</p>
+<div class="w-full bg-surface-variant rounded-full h-2 mb-1 overflow-hidden">
+<div class="bg-secondary-container h-2 rounded-full" style="width: 75%"></div>
+</div>
+<div class="flex justify-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant">75%</span>
+</div>
+</div>
+<!-- List Card: Proyecto Alpha -->
+<div class="bg-surface-container-low rounded-xl p-grid-gutter relative overflow-hidden group hover:bg-surface-container-high transition-colors cursor-pointer border border-transparent hover:border-outline-variant/30">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-container"></div>
+<div class="flex justify-between items-start mb-stack-md">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-container/10 flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined">rocket_launch</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Proyecto Alpha</h3>
+</div>
+<button aria-label="More options" class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-md">24 tareas, 18 pendientes</p>
+<div class="w-full bg-surface-variant rounded-full h-2 mb-1 overflow-hidden">
+<div class="bg-tertiary-container h-2 rounded-full" style="width: 25%"></div>
+</div>
+<div class="flex justify-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant">25%</span>
+</div>
+</div>
+<!-- List Card: Familia -->
+<div class="bg-surface-container-low rounded-xl p-grid-gutter relative overflow-hidden group hover:bg-surface-container-high transition-colors cursor-pointer border border-transparent hover:border-outline-variant/30">
+<div class="absolute top-0 left-0 w-1 h-full bg-error"></div>
+<div class="flex justify-between items-start mb-stack-md">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined">home</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Familia</h3>
+</div>
+<button aria-label="More options" class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-md">5 tareas, 0 pendientes</p>
+<div class="w-full bg-surface-variant rounded-full h-2 mb-1 overflow-hidden">
+<div class="bg-error h-2 rounded-full" style="width: 100%"></div>
+</div>
+<div class="flex justify-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant">100%</span>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-surface dark:bg-surface fixed bottom-0 left-0 w-full z-50 rounded-t-xl shadow-[0_-4px_16px_rgba(73,75,214,0.08)] shadow-sm flex justify-around items-center px-base pb-safe pt-2 pb-2">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200 p-2">
+<span class="material-symbols-outlined mb-1" data-icon="calendar_month">calendar_month</span>
+<span class="font-label-sm text-label-sm">Month</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary-container text-on-primary-container dark:text-on-primary-container rounded-full px-4 py-1 hover:text-primary transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined mb-1" data-icon="view_agenda" style="font-variation-settings: 'FILL' 1;">view_agenda</span>
+<span class="font-label-sm text-label-sm">Agenda</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200 p-2">
+<span class="material-symbols-outlined mb-1" data-icon="add_circle">add_circle</span>
+<span class="font-label-sm text-label-sm">Add</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200 p-2">
+<span class="material-symbols-outlined mb-1" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</button>
+</nav>
+</body></html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vista Diaria - Calendario</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Soft subtle grid line for timeline */
+        .timeline-grid {
+            background-image: linear-gradient(to bottom, var(--tw-colors-outline-variant) 1px, transparent 1px);
+            background-size: 100% 64px; /* 64px height per hour */
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#464554",
+                    "primary-container": "#6063ee",
+                    "secondary-fixed-dim": "#ffb2b7",
+                    "secondary-fixed": "#ffdadb",
+                    "on-primary-container": "#fffbff",
+                    "inverse-on-surface": "#eaf1ff",
+                    "surface-variant": "#d3e4fe",
+                    "surface-bright": "#f8f9ff",
+                    "on-secondary-container": "#fffbff",
+                    "outline-variant": "#e2e2e8",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "secondary": "#b90538",
+                    "on-tertiary-container": "#fffbff",
+                    "on-secondary-fixed": "#40000d",
+                    "on-secondary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#dce9ff",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#213145",
+                    "surface-container-low": "#eff4ff",
+                    "on-background": "#0b1c30",
+                    "surface-container": "#ffffff",
+                    "inverse-primary": "#c0c1ff",
+                    "tertiary": "#904900",
+                    "tertiary-fixed": "#ffdcc5",
+                    "tertiary-container": "#b55d00",
+                    "surface": "#ffffff",
+                    "on-tertiary-fixed": "#301400",
+                    "on-primary": "#ffffff",
+                    "primary": "#4648d4",
+                    "surface-dim": "#cbdbf5",
+                    "primary-fixed": "#e1e0ff",
+                    "outline": "#767586",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-tertiary-fixed-variant": "#703700",
+                    "on-error": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "background": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "surface-tint": "#494bd6",
+                    "on-secondary-fixed-variant": "#92002a",
+                    "secondary-container": "#dc2c4f",
+                    "on-primary-fixed": "#07006c",
+                    "on-surface": "#0b1c30"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "grid-gutter": "16px",
+                    "cell-padding": "12px",
+                    "stack-sm": "4px",
+                    "grid-margin": "24px",
+                    "stack-md": "12px",
+                    "stack-lg": "24px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "label-md": ["Hanken Grotesk"],
+                    "body-sm": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"],
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "label-sm": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "display": ["Hanken Grotesk"],
+                    "headline-sm": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased md:flex h-screen overflow-hidden">
+<!-- Desktop Navigation Drawer (hidden on mobile) -->
+<nav class="hidden md:flex flex-col h-full py-stack-lg px-grid-gutter h-full w-[280px] bg-surface border-r border-outline-variant flex-shrink-0">
+<div class="flex items-center gap-3 mb-stack-lg px-cell-padding">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A small circular avatar portrait of a young professional in a softly lit, minimalist room with a neutral pastel background, reflecting a calm and organized brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWxHY0mjFR0K6HAD-uoWxmzwVDIgqqRYSng3-9mogq2I0lEtU4pcJYP3UWNMqYKPTYLlvKeHkRZfeDvHGgr8RrWT_95fMyXCCGsAbFliMVnA7jfz0CcTxGgnZF4WHpJckQp8vDT2Ey6Qu2Ib-MbnA_SH6fF4xS1xvXThhLLBLkIaol6EZGFczEGJGdVXKmt5qdQiPxTJtUl37zm4fu_QFIlrQkPte4e7hKVAjPrg7wSBdHCIxAQ0C9bw"/>
+<div>
+<h2 class="font-label-md text-label-md text-on-surface">Alex Rivers</h2>
+</div>
+</div>
+<ul class="flex flex-col gap-2">
+<li class="">
+<a class="flex items-center gap-3 py-3 px-cell-padding text-primary font-bold bg-primary/10 rounded-lg transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="view_day" data-weight="fill">view_day</span>
+<span class="">Day</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 py-3 px-cell-padding text-on-surface-variant hover:bg-surface-variant/50 rounded-lg transition-all duration-150 ease-in-out" href="{{DATA:SCREEN:SCREEN_6}}">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="">Month</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 py-3 px-cell-padding text-on-surface-variant hover:bg-surface-variant/50 rounded-lg transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="">Settings</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 py-3 px-cell-padding text-on-surface-variant hover:bg-surface-variant/50 rounded-lg transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="">Brain Dump</span>
+</a>
+</li></ul>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full relative overflow-hidden bg-surface">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-grid-gutter py-base w-full top-0 bg-surface shadow-sm z-10 md:hidden border-b border-outline-variant">
+<button class="text-on-surface hover:bg-surface-variant/50 transition-colors p-2 rounded-full active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-on-surface font-semibold">September 2023</h1>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar portrait of a young professional in a softly lit, minimalist room with a neutral pastel background, reflecting a calm and organized brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWqx5Vd5a5iCIkitmZpU62splCmK7mMLMtinf9fAp3t2QDesJBd84btqhbrAuO9t2IC57QHvNeEj5bxKhw_Ej7gsGu62Ow4IWYnvX2uIDVAfvtdTV19zJNL5FaQEnZwub7gvExK-6X70Ohchhm6Y0Y1pyyAFc5tilimrjpJO0cJ004vKmewoMlLPnxGTkNG6IrJtOkbWAVwsSQaIhCFWfELcMAzJldlTfm2NJhGsNLrvPOtlw7Kc4E-Q"/>
+</div>
+</header>
+<!-- Desktop Header Replacement -->
+<header class="hidden md:flex justify-between items-center px-grid-margin py-stack-lg bg-surface z-10 border-b border-outline-variant">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">September 2023</h1>
+<button class="bg-primary hover:bg-primary/90 text-on-primary font-label-md text-label-md py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                 New Event
+             </button>
+</header>
+<!-- Day Selector (Horizontal Scroll) -->
+<div class="bg-surface px-grid-gutter py-stack-sm flex items-center justify-between overflow-x-auto no-scrollbar border-b border-outline-variant shrink-0">
+<div class="flex flex-col items-center min-w-[40px] py-2 cursor-pointer text-on-surface-variant hover:text-primary transition-colors">
+<span class="font-label-sm text-[10px] mb-1 uppercase">S</span>
+<span class="font-headline-sm text-lg">24</span>
+</div>
+<div class="flex flex-col items-center min-w-[40px] py-2 bg-primary text-on-primary rounded-full cursor-default shadow-sm">
+<span class="font-label-sm text-[10px] mb-1 uppercase">M</span>
+<span class="font-headline-sm text-lg font-bold">25</span>
+</div>
+<div class="flex flex-col items-center min-w-[40px] py-2 cursor-pointer text-on-surface-variant hover:text-primary transition-colors">
+<span class="font-label-sm text-[10px] mb-1 uppercase">T</span>
+<span class="font-headline-sm text-lg">26</span>
+</div>
+<div class="flex flex-col items-center min-w-[40px] py-2 cursor-pointer text-on-surface-variant hover:text-primary transition-colors">
+<span class="font-label-sm text-[10px] mb-1 uppercase">W</span>
+<span class="font-headline-sm text-lg">27</span>
+</div>
+<div class="flex flex-col items-center min-w-[40px] py-2 cursor-pointer text-on-surface-variant hover:text-primary transition-colors">
+<span class="font-label-sm text-[10px] mb-1 uppercase">T</span>
+<span class="font-headline-sm text-lg">28</span>
+</div>
+<div class="flex flex-col items-center min-w-[40px] py-2 cursor-pointer text-on-surface-variant hover:text-primary transition-colors">
+<span class="font-label-sm text-[10px] mb-1 uppercase">F</span>
+<span class="font-headline-sm text-lg">29</span>
+</div>
+<div class="flex flex-col items-center min-w-[40px] py-2 cursor-pointer text-on-surface-variant hover:text-primary transition-colors">
+<span class="font-label-sm text-[10px] mb-1 uppercase">S</span>
+<span class="font-headline-sm text-lg">30</span>
+</div>
+</div>
+<!-- Scrollable Timeline Canvas -->
+<div class="flex-1 overflow-y-auto bg-surface relative pb-24 md:pb-8">
+<div class="absolute top-0 left-0 w-full h-[768px] flex"> <!-- 12 hours * 64px -->
+<!-- Time Labels -->
+<div class="w-16 flex-shrink-0 flex flex-col justify-between py-2 text-right pr-4 border-r border-outline-variant bg-surface text-on-surface-variant font-label-sm text-[11px] opacity-70">
+<div class="h-16 relative"><span class="absolute -top-2 right-4">8 AM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">9 AM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">10 AM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">11 AM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">12 PM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">1 PM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">2 PM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">3 PM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">4 PM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">5 PM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">6 PM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">7 PM</span></div>
+<div class="h-16 relative"><span class="absolute -top-2 right-4">8 PM</span></div>
+</div>
+<!-- Event Canvas -->
+<div class="flex-1 relative timeline-grid ml-0 mr-4">
+<!-- Current Time Indicator (approx 9:30 AM) -->
+<div class="absolute w-full flex items-center z-20 pointer-events-none" style="top: 96px;">
+<div class="w-2.5 h-2.5 rounded-full bg-primary -ml-1.5 border-2 border-surface"></div>
+<div class="flex-1 h-[2px] bg-primary opacity-50"></div>
+</div>
+<!-- Event: Reunión de Equipo (10:00 AM - 11:30 AM) -->
+<!-- Top: 128px (2 hours from 8AM * 64px), Height: 96px (1.5 hours * 64px) -->
+<a class="absolute left-2 right-0 rounded bg-primary/10 border-l-[3px] border-primary hover:bg-primary/20 transition-colors cursor-pointer p-2 flex flex-col justify-start block" href="{{DATA:SCREEN:SCREEN_7}}" style="top: 128px; height: 96px;">
+<h3 class="font-label-md text-[13px] text-primary truncate">Reunión de Equipo</h3>
+<p class="font-body-sm text-[11px] text-primary/80 truncate">10:00 - 11:30 · Sala A</p>
+</a>
+<!-- Event: Almuerzo (1:00 PM - 2:00 PM) -->
+<!-- Top: 320px (5 hours from 8AM * 64px), Height: 64px (1 hour * 64px) -->
+<a class="absolute left-2 right-0 rounded bg-gray-100 border-l-[3px] border-gray-400 hover:bg-gray-200 transition-colors cursor-pointer p-2 flex flex-col justify-start block" href="{{DATA:SCREEN:SCREEN_7}}" style="top: 320px; height: 64px;">
+<h3 class="font-label-md text-[13px] text-gray-700 truncate">Almuerzo</h3>
+<p class="font-body-sm text-[11px] text-gray-500 truncate">13:00 - 14:00</p>
+</a>
+<!-- Event: Gimnasio (6:00 PM - 7:30 PM) -->
+<!-- Top: 640px (10 hours from 8AM * 64px), Height: 96px (1.5 hours * 64px) -->
+<a class="absolute left-2 right-0 rounded bg-blue-50 border-l-[3px] border-blue-500 hover:bg-blue-100 transition-colors cursor-pointer p-2 flex flex-col justify-start block" href="{{DATA:SCREEN:SCREEN_7}}" style="top: 640px; height: 96px;">
+<h3 class="font-label-md text-[13px] text-blue-700 truncate">Gimnasio</h3>
+<p class="font-body-sm text-[11px] text-blue-600/80 truncate">18:00 - 19:30</p>
+</a>
+</div>
+</div>
+</div>
+<!-- Floating Action Button (Mobile Only) -->
+<button class="md:hidden absolute right-4 bottom-36 w-12 h-12 bg-surface border border-outline-variant text-on-surface-variant rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-40">
+<span class="material-symbols-outlined" style="font-size: 24px;">psychology</span>
+</button><button class="md:hidden absolute right-4 bottom-20 w-12 h-12 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-40">
+<span class="material-symbols-outlined" data-icon="add" style="font-size: 24px;">add</span>
+</button>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe pt-2 bg-surface border-t border-outline-variant pb-2">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors py-2 px-4" href="{{DATA:SCREEN:SCREEN_6}}">
+<span class="material-symbols-outlined text-[20px] mb-1" data-icon="calendar_month">calendar_month</span>
+<span class="font-label-sm text-[10px]">Month</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary transition-colors py-2 px-4" href="#">
+<span class="material-symbols-outlined text-[20px] mb-1" data-icon="view_day" data-weight="fill">view_day</span>
+<span class="font-label-sm text-[10px] font-semibold">Day</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors py-2 px-4" href="#">
+<span class="material-symbols-outlined text-[20px] mb-1" data-icon="search">search</span>
+<span class="font-label-sm text-[10px]">Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors py-2 px-4" href="#">
+<span class="material-symbols-outlined text-[20px] mb-1" data-icon="settings">settings</span>
+<span class="font-label-sm text-[10px]">Settings</span>
+</a>
+</nav>
+</body></html>

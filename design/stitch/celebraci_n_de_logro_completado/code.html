@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>¡Mente Despejada!</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#213145",
+                        "on-secondary-container": "#fffbff",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#40000d",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#b55d00",
+                        "surface-container": "#e5eeff",
+                        "on-tertiary-container": "#fffbff",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#dce9ff",
+                        "secondary-fixed-dim": "#ffb2b7",
+                        "on-primary-fixed": "#07006c",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-surface": "#0b1c30",
+                        "surface-bright": "#f8f9ff",
+                        "surface-variant": "#d3e4fe",
+                        "on-secondary-fixed-variant": "#92002a",
+                        "background": "#f8f9ff",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "secondary-container": "#dc2c4f",
+                        "surface": "#f8f9ff",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#6063ee",
+                        "primary": "#4648d4",
+                        "outline-variant": "#c7c4d7",
+                        "secondary-fixed": "#ffdadb",
+                        "surface-tint": "#494bd6",
+                        "on-primary-container": "#fffbff",
+                        "secondary": "#b90538",
+                        "inverse-primary": "#c0c1ff",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-background": "#0b1c30",
+                        "on-surface-variant": "#464554",
+                        "surface-dim": "#cbdbf5",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container-highest": "#d3e4fe",
+                        "outline": "#767586",
+                        "tertiary": "#904900",
+                        "primary-fixed": "#e1e0ff",
+                        "on-tertiary-fixed": "#301400",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#c0c1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "4px",
+                        "stack-lg": "24px",
+                        "grid-margin": "24px",
+                        "base": "8px",
+                        "stack-md": "12px",
+                        "grid-gutter": "16px",
+                        "cell-padding": "12px"
+                    },
+                    "fontFamily": {
+                        "display": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "body-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .confetti-piece {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #6063ee;
+            border-radius: 50%;
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(360deg); }
+        }
+        .soft-glow {
+            box-shadow: 0 16px 32px -8px rgba(96, 99, 238, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center overflow-hidden">
+<!-- Celebration Overlay/Modal -->
+<main class="relative w-full max-w-lg mx-auto p-grid-margin z-10 flex flex-col items-center text-center">
+<!-- Illustration -->
+<div class="mb-stack-lg relative w-64 h-64 rounded-full bg-surface-container flex items-center justify-center soft-glow">
+<img class="w-48 h-48 object-contain" data-alt="A soft, abstract 3D illustration of a blooming flower in pastel blue and purple tones, symbolizing growth and completion, set against a pristine, airy light-mode background. The lighting is gentle and diffused, evoking a sense of calm and accomplishment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXXFAPYbRuWOdrYa5t38cJp4l2jYkqz30OVipQHWEEhDUkC_Btzp2G9U3xTT9h0RraJxpI3U0Zd79JTw_izY9ZTOty-bm64Q_uPCi_V6Sq0pwfHZGOLp0s2F9tZhIc5RhPT_ICfOD0FQHDHKlESJg6nGF8ltYI2Tf9qS9fM8mKeYYr6R1746y9BqOJ_fssWhxiUFQvql--zraHUUIegyCu5sKLxE4BBGG-xnMZ1MJJ1hUR_DBMEYNXUw"/>
+</div>
+<!-- Headline & Message -->
+<h1 class="font-display text-display text-primary mb-stack-sm">¡Mente Despejada!</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-stack-lg">
+            Has completado todas las tareas de la carpeta <span class="font-semibold text-on-surface">Proyecto Alpha</span>
+</p>
+<!-- Stats Bento -->
+<div class="grid grid-cols-2 gap-grid-gutter w-full mb-stack-lg">
+<div class="bg-surface-container-low rounded-xl p-stack-md flex flex-col items-center justify-center border border-surface-variant">
+<span class="material-symbols-outlined text-primary text-3xl mb-base" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-headline-md text-headline-md text-on-surface">2h 15m</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tiempo ahorrado</span>
+</div>
+<div class="bg-surface-container-low rounded-xl p-stack-md flex flex-col items-center justify-center border border-surface-variant">
+<span class="material-symbols-outlined text-primary text-3xl mb-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-headline-md text-headline-md text-on-surface">14</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tareas completadas</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="w-full flex flex-col gap-stack-sm sm:flex-row sm:justify-center">
+<button class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-full hover:bg-primary-fixed-dim transition-colors flex items-center justify-center gap-2 w-full sm:w-auto">
+<span class="material-symbols-outlined">celebration</span>
+                Celebrate &amp; Continue
+            </button>
+<button class="bg-transparent text-primary font-label-md text-label-md px-6 py-3 rounded-full hover:bg-surface-container-low transition-colors border border-outline-variant w-full sm:w-auto">
+                Go to Agenda
+            </button>
+</div>
+</main>
+<!-- Confetti Script -->
+<script>
+        const colors = ['#6063ee', '#4648d4', '#c0c1ff', '#e1e0ff', '#ffb2b7'];
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.classList.add('confetti-piece');
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.top = -10 + 'vh';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            confetti.style.animationDelay = (Math.random() * 2) + 's';
+            
+            // Randomize shape (circle or square)
+            if(Math.random() > 0.5) confetti.style.borderRadius = '0';
+            
+            document.body.appendChild(confetti);
+        }
+    </script>
+</body></html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Rewards &amp; Achievements</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-surface": "#213145",
+                      "on-secondary-container": "#fffbff",
+                      "error-container": "#ffdad6",
+                      "on-secondary-fixed": "#40000d",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-container": "#b55d00",
+                      "surface-container": "#e5eeff",
+                      "on-tertiary-container": "#fffbff",
+                      "on-error": "#ffffff",
+                      "surface-container-high": "#dce9ff",
+                      "secondary-fixed-dim": "#ffb2b7",
+                      "on-primary-fixed": "#07006c",
+                      "tertiary-fixed-dim": "#ffb783",
+                      "on-primary": "#ffffff",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-surface": "#0b1c30",
+                      "surface-bright": "#f8f9ff",
+                      "surface-variant": "#d3e4fe",
+                      "on-secondary-fixed-variant": "#92002a",
+                      "background": "#f8f9ff",
+                      "on-tertiary-fixed-variant": "#703700",
+                      "secondary-container": "#dc2c4f",
+                      "surface": "#f8f9ff",
+                      "on-error-container": "#93000a",
+                      "primary-container": "#6063ee",
+                      "primary": "#4648d4",
+                      "outline-variant": "#c7c4d7",
+                      "secondary-fixed": "#ffdadb",
+                      "surface-tint": "#494bd6",
+                      "on-primary-container": "#fffbff",
+                      "secondary": "#b90538",
+                      "inverse-primary": "#c0c1ff",
+                      "on-tertiary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-primary-fixed-variant": "#2f2ebe",
+                      "tertiary-fixed": "#ffdcc5",
+                      "on-background": "#0b1c30",
+                      "on-surface-variant": "#464554",
+                      "surface-dim": "#cbdbf5",
+                      "surface-container-low": "#eff4ff",
+                      "surface-container-highest": "#d3e4fe",
+                      "outline": "#767586",
+                      "tertiary": "#904900",
+                      "primary-fixed": "#e1e0ff",
+                      "on-tertiary-fixed": "#301400",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed-dim": "#c0c1ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-sm": "4px",
+                      "stack-lg": "24px",
+                      "grid-margin": "24px",
+                      "base": "8px",
+                      "stack-md": "12px",
+                      "grid-gutter": "16px",
+                      "cell-padding": "12px"
+              },
+              "fontFamily": {
+                      "display": ["Hanken Grotesk"],
+                      "headline-md": ["Hanken Grotesk"],
+                      "headline-sm": ["Hanken Grotesk"],
+                      "body-sm": ["Hanken Grotesk"],
+                      "body-md": ["Hanken Grotesk"],
+                      "label-sm": ["Hanken Grotesk"],
+                      "headline-lg": ["Hanken Grotesk"],
+                      "label-md": ["Hanken Grotesk"],
+                      "headline-lg-mobile": ["Hanken Grotesk"],
+                      "body-lg": ["Hanken Grotesk"]
+              },
+              "fontSize": {
+                      "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px rgba(70, 72, 212, 0.05);
+        }
+        .soft-glow {
+            box-shadow: 0 12px 24px rgba(96, 99, 238, 0.15);
+        }
+        .progress-bar-fill {
+            transition: width 1s ease-in-out;
+        }
+        .feed-item {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .feed-item:nth-child(1) { animation-delay: 0.1s; }
+        .feed-item:nth-child(2) { animation-delay: 0.2s; }
+        .feed-item:nth-child(3) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-[80px] md:pb-0 font-body-md">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky bg-surface dark:bg-background flex justify-between items-center px-grid-margin py-base z-40 flat no shadows">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Achievements</h1>
+<button class="w-10 h-10 flex items-center justify-center rounded-full overflow-hidden hover:bg-surface-container-low transition-colors">
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden flex items-center justify-center text-primary font-label-md text-label-md">
+                U
+            </div>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-grid-margin max-w-4xl mx-auto pt-stack-md space-y-grid-gutter md:grid md:grid-cols-12 md:gap-grid-gutter md:space-y-0">
+<!-- Central Trophy / Streak Section -->
+<section class="md:col-span-12 glass-card rounded-2xl p-stack-lg flex flex-col items-center justify-center text-center soft-glow relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 50% -20%, var(--tw-colors-primary) 0%, transparent 70%);"></div>
+<div class="w-24 h-24 rounded-full bg-surface-container-high flex items-center justify-center mb-stack-md relative shadow-sm">
+<span class="material-symbols-outlined text-4xl text-tertiary-container" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<div class="absolute -bottom-2 bg-tertiary-container text-on-tertiary-container font-label-sm text-label-sm px-3 py-1 rounded-full shadow-sm">Day 5</div>
+</div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg mb-stack-sm text-on-surface">5 Days of Mental Clarity</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-md">You're on a roll. Consistent focus is building a calmer mind. Keep up the gentle rhythm.</p>
+<!-- Progress to next major milestone -->
+<div class="w-full max-w-md mt-stack-lg">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-2">
+<span>Current Streak</span>
+<span>Next Reward: 7 Days</span>
+</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full progress-bar-fill" style="width: 71%;"></div>
+</div>
+</div>
+</section>
+<!-- Cognitive Badges Grid -->
+<section class="md:col-span-8 space-y-stack-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">workspace_premium</span>
+                Cognitive Badges
+            </h3>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-base">
+<!-- Badge 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-cell-padding flex flex-col items-center text-center hover:bg-surface-container-low transition-colors group cursor-pointer relative overflow-hidden">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface mb-1">Task Decimator</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Cleared 10 tasks in a day</span>
+<div class="absolute top-2 right-2 text-primary opacity-20 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" style="font-size: 16px;">info</span>
+</div>
+</div>
+<!-- Badge 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-cell-padding flex flex-col items-center text-center hover:bg-surface-container-low transition-colors group cursor-pointer relative overflow-hidden">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-tertiary-container" style="font-variation-settings: 'FILL' 1;">psychology_alt</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface mb-1">Mind Dump Master</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Logged 5 brain dumps</span>
+</div>
+<!-- Badge 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-cell-padding flex flex-col items-center text-center hover:bg-surface-container-low transition-colors group cursor-pointer relative overflow-hidden opacity-50 grayscale">
+<div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-outline">center_focus_strong</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface mb-1">Focus Champion</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Complete a 4hr block</span>
+<div class="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-outline">lock</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Achievements Feed -->
+<section class="md:col-span-4 space-y-stack-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">history</span>
+                Activity
+            </h3>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-cell-padding space-y-stack-md">
+<!-- Feed Item 1 -->
+<div class="feed-item flex gap-3 items-start relative pb-stack-md">
+<!-- Connector Line -->
+<div class="absolute left-[15px] top-8 bottom-0 w-px bg-surface-variant"></div>
+<div class="w-8 h-8 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-on-primary-container" style="font-size: 16px;">emoji_events</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface"><span class="font-medium">Task Decimator</span> unlocked!</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Today, 2:30 PM</p>
+</div>
+</div>
+<!-- Feed Item 2 -->
+<div class="feed-item flex gap-3 items-start relative pb-stack-md">
+<div class="absolute left-[15px] top-8 bottom-0 w-px bg-surface-variant"></div>
+<div class="w-8 h-8 rounded-full bg-tertiary-container flex-shrink-0 flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-on-tertiary-container" style="font-size: 16px;">local_fire_department</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Hit a <span class="font-medium">5 Day Streak</span></p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Today, 9:00 AM</p>
+</div>
+</div>
+<!-- Feed Item 3 -->
+<div class="feed-item flex gap-3 items-start relative">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex-shrink-0 flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-on-surface" style="font-size: 16px;">task_alt</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Completed daily review</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Yesterday, 8:45 PM</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Mobile) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container dark:bg-inverse-surface shadow-[0_-4px_16px_rgba(70,72,212,0.08)] rounded-t-xl md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-primary-fixed-dim dark:hover:bg-primary-fixed transition-all active:scale-95 duration-200 p-2 rounded-lg">
+<span class="material-symbols-outlined mb-1">calendar_month</span>
+<span class="font-label-md text-label-md-mobile">Month</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-primary-fixed-dim dark:hover:bg-primary-fixed transition-all active:scale-95 duration-200 p-2 rounded-lg">
+<span class="material-symbols-outlined mb-1">view_agenda</span>
+<span class="font-label-md text-label-md-mobile">Agenda</span>
+</button>
+<!-- Assuming this page loosely maps to 'Settings' or a profile area if we had to pick, but normally it might be its own tab. We'll leave them inactive for the strict nav mapping rule as it doesn't perfectly match Calendar/Agenda/Add. -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-primary-fixed-dim dark:hover:bg-primary-fixed transition-all active:scale-95 duration-200 p-2 rounded-lg">
+<span class="material-symbols-outlined mb-1">settings</span>
+<span class="font-label-md text-label-md-mobile">Settings</span>
+</button>
+</nav>
+<!-- Side Navigation (Web - Hidden on mobile) -->
+<nav class="hidden md:flex flex-col fixed left-0 top-[72px] bottom-0 w-[280px] bg-surface-container-lowest border-r border-surface-variant p-grid-margin z-30">
+<div class="space-y-2">
+<button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors text-left font-label-md text-label-md">
+<span class="material-symbols-outlined">calendar_month</span>
+                Month
+            </button>
+<button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors text-left font-label-md text-label-md">
+<span class="material-symbols-outlined">view_agenda</span>
+                Agenda
+            </button>
+<div class="pt-4 pb-2">
+<hr class="border-surface-variant"/>
+</div>
+<!-- Active State in Sidebar -->
+<button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-container text-on-primary-container text-left font-label-md text-label-md">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+                Achievements
+            </button>
+<button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors text-left font-label-md text-label-md">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </button>
+</div>
+</nav>
+</body></html>
