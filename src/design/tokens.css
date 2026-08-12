@@ -1,0 +1,140 @@
+@import 'tailwindcss';
+@import '@fontsource/hanken-grotesk/400.css';
+@import '@fontsource/hanken-grotesk/500.css';
+@import '@fontsource/hanken-grotesk/600.css';
+@import '@fontsource/hanken-grotesk/700.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
+
+  --color-surface: #f8f9ff;
+  --color-surface-lowest: #ffffff;
+  --color-surface-low: #eff4ff;
+  --color-surface-mid: #e5eeff;
+  --color-surface-high: #dce9ff;
+  --color-surface-highest: #d3e4fe;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #464554;
+  --color-outline: #767586;
+  --color-outline-variant: #c7c4d7;
+
+  --color-primary: #4648d4;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #e1e0ff;
+  --color-on-primary-container: #07006c;
+
+  --color-amber: #b55d00;
+  --color-amber-container: #ffdcc5;
+  --color-on-amber-container: #301400;
+
+  --color-accent: #b90538;
+
+  --color-event-indigo: #4648d4;
+  --color-event-teal: #0f766e;
+  --color-event-rose: #b90538;
+  --color-event-amber: #b55d00;
+  --color-event-slate: #475569;
+
+  --spacing-base: 8px;
+  --spacing-cell: 12px;
+  --spacing-gutter: 16px;
+  --spacing-margin: 24px;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  --text-display: 48px;
+  --text-headline-lg: 32px;
+  --text-headline-md: 24px;
+  --text-headline-sm: 20px;
+  --text-body-lg: 18px;
+  --text-body-md: 16px;
+  --text-body-sm: 14px;
+  --text-label-md: 14px;
+  --text-label-sm: 12px;
+}
+
+@layer theme {
+  .dark {
+    --color-surface: #101a2b;
+    --color-surface-lowest: #0b1220;
+    --color-surface-low: #16213a;
+    --color-surface-mid: #1c2947;
+    --color-surface-high: #223154;
+    --color-surface-highest: #293b63;
+    --color-on-surface: #eaf1ff;
+    --color-on-surface-variant: #c3ccdf;
+    --color-outline: #8b93a7;
+    --color-outline-variant: #37415c;
+
+    --color-primary: #c0c1ff;
+    --color-on-primary: #07006c;
+    --color-primary-container: #2f2ebe;
+    --color-on-primary-container: #e1e0ff;
+
+    --color-amber: #ffb783;
+    --color-amber-container: #4a2500;
+    --color-on-amber-container: #ffdcc5;
+
+    --color-accent: #ffb2b7;
+
+    --color-event-indigo: #a5a6ff;
+    --color-event-teal: #5eead4;
+    --color-event-rose: #ffb2b7;
+    --color-event-amber: #ffb783;
+    --color-event-slate: #a8b4c8;
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
