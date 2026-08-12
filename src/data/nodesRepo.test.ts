@@ -42,7 +42,7 @@ describe('nodesRepo.create', () => {
       text: 'Reunión',
       schedule: buildSchedule('2026-08-13T14:00:00.000Z', 60),
     });
-    const tipos = (await activityRepo.listAll()).map((a) => a.type);
+    const tipos = (await activityRepo.listAll()).map((a) => a.type).sort();
     expect(tipos).toEqual(['capture', 'schedule']);
   });
 });

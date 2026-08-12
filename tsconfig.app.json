@@ -21,9 +21,13 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] },
-    "types": ["vitest/globals", "@testing-library/jest-dom", "vite-plugin-pwa/client"]
+    "paths": { "@/*": ["./src/*"] },
+    "types": [
+      "vite/client",
+      "vitest/globals",
+      "@testing-library/jest-dom",
+      "vite-plugin-pwa/client"
+    ]
   },
   "include": ["src"]
 }
