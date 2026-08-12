@@ -1,7 +1,7 @@
 import { dayBounds, type CalendarDay } from '@/domain/calendarDay';
 import { DomainError } from '@/domain/errors';
 import { orderBetween } from '@/domain/order';
-import { assertMoveAllowed, descendantsOf, indexNodes } from '@/domain/tree';
+import { assertMoveAllowed, depthOf, descendantsOf, indexNodes, MAX_DEPTH } from '@/domain/tree';
 import type { EventColorKey, LuminaNode, NodeId, Schedule } from '@/domain/types';
 import { crearActividad } from './activityRepo';
 import { ahoraIso, db, nuevoId } from './db';
@@ -52,8 +52,16 @@ function claveDeOrden(
 }
 
 async function hermanosDe(parentId: NodeId | null): Promise<LuminaNode[]> {
-  const todos = await db.nodes.toArray();
-  return indexNodes(todos).childrenOf(parentId);
+  const index = indexNodes(await db.nodes.toArray());
+
+  if (parentId !== null && index.byId.has(parentId) && depthOf(index, parentId) + 1 > MAX_DEPTH) {
+    throw new DomainError(
+      'MAX_DEPTH',
+      `No se pueden crear más de ${MAX_DEPTH} niveles de anidación`,
+    );
+  }
+
+  return index.childrenOf(parentId);
 }
 
 function nodoBase(input: CreateNodeInput, order: string): LuminaNode {
