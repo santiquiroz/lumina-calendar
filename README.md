@@ -4,8 +4,9 @@ Un calendario donde **cada evento es una carpeta de tareas anidables** y las
 ideas sin fecha tienen su propio lugar antes de convertirse en compromisos.
 Funciona entero en tu dispositivo: sin cuentas, sin servidor, sin red.
 
+[![CI](https://github.com/santiquiroz/lumina-calendar/actions/workflows/ci.yml/badge.svg)](https://github.com/santiquiroz/lumina-calendar/actions/workflows/ci.yml)
 ![Licencia](https://img.shields.io/badge/licencia-AGPL--3.0%20%2B%20atribuci%C3%B3n-4648d4)
-![Pruebas](https://img.shields.io/badge/pruebas-210-4648d4)
+![Pruebas](https://img.shields.io/badge/pruebas-214%20unitarias%20%2B%2016%20e2e-4648d4)
 ![Cobertura](https://img.shields.io/badge/cobertura-91%25-4648d4)
 
 ## Por qué existe
@@ -49,7 +50,7 @@ npm run dev        # http://localhost:5173
 Otros comandos:
 
 ```bash
-npm run test:run       # 210 pruebas
+npm run test:run       # 214 pruebas unitarias y de componentes
 npm run test:coverage  # con umbrales de cobertura
 npm run lint           # TypeScript en modo estricto
 npm run build          # build de producción + service worker
