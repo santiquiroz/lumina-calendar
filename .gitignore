@@ -29,3 +29,17 @@ Thumbs.db
 # Playwright
 /test-results/
 /playwright-report/
+
+# Android / Capacitor
+android/keystore.properties
+android/app/release/
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/local.properties
+assets/
+*.apk
+*.aab
+*.jks
+*.keystore

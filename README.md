@@ -58,6 +58,32 @@ npm run e2e            # pruebas end to end con Playwright
 npm run icons          # regenera los iconos PNG desde los SVG
 ```
 
+## Android
+
+Además de la PWA hay un APK: la misma app web empaquetada con Capacitor, con los
+archivos dentro del APK. No carga nada de la red y no necesita hosting.
+
+Descargalo desde [Releases](https://github.com/santiquiroz/lumina-calendar/releases)
+e instalalo permitiendo orígenes desconocidos, o compilalo vos:
+
+```bash
+npm run android:sync                        # build web + copiar a android/
+cd android && ./gradlew assembleRelease     # APK en app/build/outputs/apk/release/
+```
+
+Para firmar tu propio release, creá `android/keystore.properties` (está ignorado
+por git) apuntando a tu keystore:
+
+```properties
+storeFile=C:/ruta/a/tu-keystore.jks
+storePassword=...
+keyAlias=...
+keyPassword=...
+```
+
+Sin ese archivo el build de release sale sin firmar, que sirve para probar pero
+no para instalar en un teléfono.
+
 ## Tus datos
 
 Viven en IndexedDB, en tu navegador. Nadie más los ve porque no hay a dónde

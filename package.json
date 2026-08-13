@@ -14,9 +14,12 @@
     "test:coverage": "vitest run --coverage",
     "lint": "tsc -b",
     "e2e": "playwright test",
-    "icons": "node scripts/generar-iconos.mjs"
+    "icons": "node scripts/generar-iconos.mjs",
+    "android:sync": "npm run build && cap sync android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
     "react": "^19.2.8",
@@ -26,6 +29,8 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.0",
     "@fontsource/hanken-grotesk": "^5.3.0",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.3.3",
