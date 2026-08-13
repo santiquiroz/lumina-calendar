@@ -2,21 +2,12 @@ import { useState } from 'react';
 import { nodesRepo } from '@/data/nodesRepo';
 import { toCalendarDay } from '@/domain/calendarDay';
 import { DomainError } from '@/domain/errors';
+import type { NodeId } from '@/domain/types';
 import { useNode } from '@/hooks/useNodes';
 import { useUiStore } from '@/store/uiStore';
-import type { NodeId } from '@/domain/types';
 import { Button } from './Button';
+import { combinarFechaYHora, horaLocal, HorarioFields } from './HorarioFields';
 import { Sheet } from './Sheet';
-
-function horaLocal(fecha: Date): string {
-  return `${`${fecha.getHours()}`.padStart(2, '0')}:${`${fecha.getMinutes()}`.padStart(2, '0')}`;
-}
-
-function combinar(dia: string, hora: string): string {
-  const [anio, mes, numero] = dia.split('-').map(Number);
-  const [h, m] = hora.split(':').map(Number);
-  return new Date(anio, mes - 1, numero, h, m).toISOString();
-}
 
 export function ScheduleSheet() {
   const nodoId = useUiStore((estado) => estado.nodoParaProgramar);
@@ -48,8 +39,8 @@ function FormularioProgramacion({ nodoId, onListo }: FormularioProgramacionProps
   async function programar(): Promise<void> {
     try {
       await nodesRepo.schedule(nodoId, {
-        start: combinar(dia, inicio),
-        end: combinar(dia, fin),
+        start: combinarFechaYHora(dia, inicio),
+        end: combinarFechaYHora(dia, fin),
         allDay: false,
       });
       onListo();
@@ -76,36 +67,14 @@ function FormularioProgramacion({ nodoId, onListo }: FormularioProgramacionProps
         </p>
       ) : null}
 
-      <label className="flex flex-col gap-1 text-[length:var(--text-label-md)] text-on-surface-variant">
-        Día
-        <input
-          type="date"
-          value={dia}
-          onChange={(evento) => setDia(evento.target.value)}
-          className="min-h-11 rounded-[length:var(--radius-md)] border border-outline-variant bg-surface-lowest px-3 text-on-surface"
-        />
-      </label>
-
-      <div className="flex gap-3">
-        <label className="flex flex-1 flex-col gap-1 text-[length:var(--text-label-md)] text-on-surface-variant">
-          Empieza
-          <input
-            type="time"
-            value={inicio}
-            onChange={(evento) => setInicio(evento.target.value)}
-            className="min-h-11 rounded-[length:var(--radius-md)] border border-outline-variant bg-surface-lowest px-3 text-on-surface"
-          />
-        </label>
-        <label className="flex flex-1 flex-col gap-1 text-[length:var(--text-label-md)] text-on-surface-variant">
-          Termina
-          <input
-            type="time"
-            value={fin}
-            onChange={(evento) => setFin(evento.target.value)}
-            className="min-h-11 rounded-[length:var(--radius-md)] border border-outline-variant bg-surface-lowest px-3 text-on-surface"
-          />
-        </label>
-      </div>
+      <HorarioFields
+        dia={dia}
+        inicio={inicio}
+        fin={fin}
+        onDia={setDia}
+        onInicio={setInicio}
+        onFin={setFin}
+      />
 
       {error ? (
         <p role="alert" className="text-[length:var(--text-body-sm)] text-accent">

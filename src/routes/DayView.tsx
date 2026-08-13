@@ -2,17 +2,19 @@ import { addDays, formatDayLong, toCalendarDay } from '@/domain/calendarDay';
 import { useDayNodes, useTreeIndex } from '@/hooks/useNodes';
 import { useNow } from '@/hooks/useNow';
 import { useUiStore } from '@/store/uiStore';
+import { Button } from '@/ui/Button';
 import { DayStrip } from '@/ui/DayStrip';
 import { EmptyState } from '@/ui/EmptyState';
 import { EventBlock } from '@/ui/EventBlock';
 import { IconButton } from '@/ui/IconButton';
 import { NowIndicator } from '@/ui/NowIndicator';
 import { TimelineGrid } from '@/ui/TimelineGrid';
-import { IconChevronDown, IconChevronRight, IconSparkles } from '@/ui/icons';
+import { IconAdd, IconChevronDown, IconChevronRight, IconSparkles } from '@/ui/icons';
 
 export function DayView() {
   const dia = useUiStore((estado) => estado.diaSeleccionado);
   const seleccionarDia = useUiStore((estado) => estado.seleccionarDia);
+  const abrirEventoNuevo = useUiStore((estado) => estado.abrirEventoNuevo);
   const eventos = useDayNodes(dia);
   const index = useTreeIndex();
   const ahora = useNow();
@@ -35,6 +37,10 @@ export function DayView() {
           </p>
         </div>
         <div className="flex items-center gap-1">
+          <Button variant="suave" onClick={abrirEventoNuevo} className="mr-1">
+            <IconAdd size={20} />
+            Nuevo evento
+          </Button>
           <IconButton label="Día anterior" onClick={() => seleccionarDia(addDays(dia, -1))}>
             <span className="rotate-180">
               <IconChevronRight size={20} />
@@ -55,7 +61,8 @@ export function DayView() {
         <EmptyState
           icono={<IconSparkles size={32} />}
           titulo="Nada agendado en este día"
-          descripcion="Un día en blanco también es un plan. Cuando quieras, capturá una idea y programala sin apuro."
+          descripcion="Un día en blanco también es un plan. Cuando quieras, creá un evento o capturá una idea y programala sin apuro."
+          accion={<Button onClick={abrirEventoNuevo}>Crear un evento</Button>}
         />
       ) : (
         <div className="relative px-2 pt-2">

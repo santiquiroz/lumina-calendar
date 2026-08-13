@@ -5,9 +5,13 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-import { manifiesto } from './src/pwa/manifest';
+import { manifiesto } from './src/pwa/manifest.ts';
+import paquete from './package.json' with { type: 'json' };
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(paquete.version),
+  },
   plugins: [
     react(),
     tailwindcss(),

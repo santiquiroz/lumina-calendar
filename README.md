@@ -84,6 +84,15 @@ keyPassword=...
 Sin ese archivo el build de release sale sin firmar, que sirve para probar pero
 no para instalar en un teléfono.
 
+### Avisos de versión nueva
+
+Como Lumina se instala por sideload y no por Play Store, la app mira ella misma
+las publicaciones del repositorio: consulta `releases/latest` como mucho dos
+veces al día, compara la etiqueta con la versión instalada y, si hay una más
+nueva, muestra un banner con el enlace al APK. Podés posponer una versión
+concreta y no vuelve a insistir con esa; la siguiente sí avisa. Sin red no pasa
+nada: el chequeo falla en silencio. También hay un botón manual en Ajustes.
+
 ## Tus datos
 
 Viven en IndexedDB, en tu navegador. Nadie más los ve porque no hay a dónde

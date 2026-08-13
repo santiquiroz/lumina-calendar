@@ -25,6 +25,7 @@ const ENLACES = [
 
 export function Sidebar() {
   const abrirCaptura = useUiStore((estado) => estado.abrirCaptura);
+  const abrirEventoNuevo = useUiStore((estado) => estado.abrirEventoNuevo);
   const racha = useStreak();
 
   return (
@@ -43,10 +44,15 @@ export function Sidebar() {
         </p>
       </div>
 
-      <Button onClick={abrirCaptura} className="mx-1">
-        <IconAdd size={20} />
-        Capturar idea
-      </Button>
+      <div className="mx-1 flex flex-col gap-2">
+        <Button onClick={abrirCaptura}>
+          <IconAdd size={20} />
+          Capturar idea
+        </Button>
+        <Button variant="suave" onClick={abrirEventoNuevo}>
+          Nuevo evento
+        </Button>
+      </div>
 
       <ul className="flex flex-col gap-1">
         {ENLACES.map(({ to, label, Icon, end }) => (

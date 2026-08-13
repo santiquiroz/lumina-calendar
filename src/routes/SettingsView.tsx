@@ -17,6 +17,7 @@ import {
 import { currentPersistence, requestPersistentStorage } from '@/data/storagePersistence';
 import type { PersistenceState } from '@/data/storagePersistence';
 import { AttributionNotice } from '@/ui/AttributionNotice';
+import { UpdateSection } from '@/ui/UpdateSection';
 import { Button } from '@/ui/Button';
 import { Card } from '@/ui/Card';
 import { IconDownload, IconMoon, IconSun, IconUpload } from '@/ui/icons';
@@ -181,6 +182,8 @@ export function SettingsView() {
           </p>
         ) : null}
       </Card>
+
+      <UpdateSection />
 
       <AttributionNotice />
 
