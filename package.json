@@ -1,7 +1,7 @@
 {
   "name": "lumina-calendar",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Calendario local-first donde cada evento es una carpeta de tareas anidables.",
   "license": "AGPL-3.0-only",
@@ -21,6 +21,7 @@
     "@capacitor/android": "^8.5.0",
     "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.5.0",
+    "@capacitor/local-notifications": "^8.2.1",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
     "react": "^19.2.8",

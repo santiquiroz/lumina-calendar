@@ -2,7 +2,7 @@ import { dayBounds, type CalendarDay } from '@/domain/calendarDay';
 import { DomainError } from '@/domain/errors';
 import { orderBetween } from '@/domain/order';
 import { assertMoveAllowed, depthOf, descendantsOf, indexNodes, MAX_DEPTH } from '@/domain/tree';
-import type { EventColorKey, LuminaNode, NodeId, Schedule } from '@/domain/types';
+import type { EventColorKey, LuminaNode, NodeId, NodeSource, Schedule } from '@/domain/types';
 import { crearActividad } from './activityRepo';
 import { ahoraIso, db, nuevoId } from './db';
 
@@ -13,6 +13,22 @@ export interface CreateNodeInput {
   colorKey?: EventColorKey | null;
   beforeId?: NodeId | null;
   afterId?: NodeId | null;
+  source?: NodeSource;
+  externalId?: string | null;
+  externalCalendar?: string | null;
+}
+
+export interface ExternalEvent {
+  externalId: string;
+  text: string;
+  schedule: Schedule;
+  calendar: string | null;
+}
+
+export interface SyncResult {
+  creados: number;
+  actualizados: number;
+  eliminados: number;
 }
 
 export interface MovePosition {
@@ -69,6 +85,9 @@ function nodoBase(input: CreateNodeInput, order: string): LuminaNode {
   return {
     id: nuevoId(),
     parentId: input.parentId ?? null,
+    source: input.source ?? 'lumina',
+    externalId: input.externalId ?? null,
+    externalCalendar: input.externalCalendar ?? null,
     text: input.text,
     done: false,
     order,
@@ -212,5 +231,99 @@ export const nodesRepo = {
 
   clear(): Promise<void> {
     return db.nodes.clear();
+  },
+
+  // Trae el calendario externo al modelo propio: crea lo nuevo, actualiza texto
+  // y horario de lo conocido (sin tocar subtareas ni completados que agregó la
+  // persona) y borra lo que desapareció, pero solo dentro de la ventana que se
+  // sincronizó, para no arrastrar eventos que ni se consultaron.
+  async syncExternal(
+    source: Exclude<NodeSource, 'lumina'>,
+    eventos: ExternalEvent[],
+    ventana: { desde: string; hasta: string },
+    // Una fuente que no respondió no puede interpretarse como "ya no hay nada":
+    // borrar en ese caso destruiría eventos por un problema de red.
+    borrarAusentes = true,
+  ): Promise<SyncResult> {
+    const ahora = ahoraIso();
+    const existentes = (await db.nodes.toArray()).filter(
+      (nodo) => nodo.source === source && nodo.externalId !== null,
+    );
+    const porId = new Map(existentes.map((nodo) => [nodo.externalId as string, nodo]));
+    const vistos = new Set(eventos.map((evento) => evento.externalId));
+
+    let creados = 0;
+    let actualizados = 0;
+
+    for (const evento of eventos) {
+      const previo = porId.get(evento.externalId);
+
+      if (!previo) {
+        const hermanos = indexNodes(await db.nodes.toArray()).childrenOf(null);
+        await db.nodes.add(
+          nodoBase(
+            {
+              text: evento.text,
+              schedule: evento.schedule,
+              source,
+              externalId: evento.externalId,
+              externalCalendar: evento.calendar,
+            },
+            claveDeOrden(hermanos, {}),
+          ),
+        );
+        creados += 1;
+        continue;
+      }
+
+      const cambio =
+        previo.text !== evento.text ||
+        previo.schedule?.start !== evento.schedule.start ||
+        previo.schedule?.end !== evento.schedule.end ||
+        previo.deletedAt !== null;
+
+      if (cambio) {
+        await db.nodes.update(previo.id, {
+          text: evento.text,
+          schedule: evento.schedule,
+          externalCalendar: evento.calendar,
+          deletedAt: null,
+          updatedAt: ahora,
+        });
+        actualizados += 1;
+      }
+    }
+
+    const desaparecidos = existentes.filter(
+      (nodo) =>
+        borrarAusentes &&
+        nodo.deletedAt === null &&
+        !vistos.has(nodo.externalId as string) &&
+        nodo.schedule !== null &&
+        nodo.schedule.start >= ventana.desde &&
+        nodo.schedule.start < ventana.hasta,
+    );
+
+    for (const nodo of desaparecidos) {
+      await db.nodes.update(nodo.id, { deletedAt: ahora, updatedAt: ahora });
+    }
+
+    return { creados, actualizados, eliminados: desaparecidos.length };
+  },
+
+  async countBySource(source: NodeSource): Promise<number> {
+    const nodos = await db.nodes.toArray();
+    return nodos.filter((nodo) => nodo.source === source && nodo.deletedAt === null).length;
+  },
+
+  async removeSource(source: Exclude<NodeSource, 'lumina'>): Promise<number> {
+    const ahora = ahoraIso();
+    const objetivos = (await db.nodes.toArray()).filter(
+      (nodo) => nodo.source === source && nodo.deletedAt === null,
+    );
+    for (const nodo of objetivos) {
+      await db.nodes.update(nodo.id, { deletedAt: ahora, updatedAt: ahora });
+    }
+    return objetivos.length;
   },
 };

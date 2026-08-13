@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { Activity, LuminaNode } from '@/domain/types';
 import { db } from './db';
 
-export const BACKUP_SCHEMA_VERSION = 1;
+export const BACKUP_SCHEMA_VERSION = 2;
 
 export class BackupError extends Error {
   constructor(message: string) {
@@ -17,9 +17,14 @@ const scheduleSchema = z.object({
   allDay: z.boolean(),
 });
 
+// Los respaldos de la versión 1 no traen el origen: se completan con los
+// valores propios de Lumina para que un archivo viejo siga siendo importable.
 const nodeSchema = z.object({
   id: z.string(),
   parentId: z.string().nullable(),
+  source: z.enum(['lumina', 'device', 'ics']).default('lumina'),
+  externalId: z.string().nullable().default(null),
+  externalCalendar: z.string().nullable().default(null),
   text: z.string(),
   done: z.boolean(),
   order: z.string(),

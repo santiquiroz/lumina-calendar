@@ -16,9 +16,16 @@ export interface Recurrence {
   until: string | null;
 }
 
+// De dónde vino el nodo. Los externos se refrescan desde su calendario de
+// origen, así que su texto y horario se sobrescriben en cada sincronización.
+export type NodeSource = 'lumina' | 'device' | 'ics';
+
 export interface LuminaNode {
   id: NodeId;
   parentId: NodeId | null;
+  source: NodeSource;
+  externalId: string | null;
+  externalCalendar: string | null;
   text: string;
   done: boolean;
   order: string;

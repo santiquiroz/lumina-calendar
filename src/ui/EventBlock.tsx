@@ -31,7 +31,16 @@ export function EventBlock({ node, index, now }: EventBlockProps) {
       className={`absolute right-2 left-2 flex flex-col gap-1 overflow-hidden rounded-[length:var(--radius-md)] border-l-4 px-3 py-2 transition-colors duration-200 hover:brightness-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${TONOS[estado]}`}
       style={{ top: topForTime(schedule.start), height: heightForRange(schedule.start, schedule.end) }}
     >
-      <span className="truncate text-[length:var(--text-label-md)] font-semibold">{node.text}</span>
+      <span className="flex items-center gap-1.5 truncate text-[length:var(--text-label-md)] font-semibold">
+        {node.source !== 'lumina' ? (
+          <span
+            aria-label={`Importado de ${node.externalCalendar ?? 'otro calendario'}`}
+            title={node.externalCalendar ?? 'Importado'}
+            className="size-1.5 shrink-0 rounded-full bg-current opacity-60"
+          />
+        ) : null}
+        <span className="truncate">{node.text}</span>
+      </span>
       <span className="truncate text-[length:var(--text-label-sm)] opacity-80">
         {formatHour(schedule.start)} - {formatHour(schedule.end)}
         {progreso.total > 0 ? ` · ${progreso.done}/${progreso.total} tareas` : ''}

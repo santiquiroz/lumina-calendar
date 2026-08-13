@@ -4,16 +4,21 @@ import { nodesRepo } from '@/data/nodesRepo';
 import { limpiarBase, renderConRuta } from '@/test/render';
 import { AgendaView } from './AgendaView';
 
-function enHoras(delta: number): Date {
-  return new Date(Date.now() + delta * 3_600_000);
+// Horas fijas del día en curso: "ahora + N horas" hacía que el evento cayera en
+// el día siguiente cuando la suite corre de noche.
+function hoyALas(hora: number, diaDelta = 0): Date {
+  const fecha = new Date();
+  fecha.setDate(fecha.getDate() + diaDelta);
+  fecha.setHours(hora, 0, 0, 0);
+  return fecha;
 }
 
-async function crearEvento(texto: string, desdeHoras: number): Promise<void> {
+async function crearEvento(texto: string, hora: number, diaDelta = 0): Promise<void> {
   await nodesRepo.create({
     text: texto,
     schedule: {
-      start: enHoras(desdeHoras).toISOString(),
-      end: enHoras(desdeHoras + 1).toISOString(),
+      start: hoyALas(hora, diaDelta).toISOString(),
+      end: hoyALas(hora + 1, diaDelta).toISOString(),
       allDay: false,
     },
   });
@@ -28,7 +33,7 @@ describe('AgendaView', () => {
   });
 
   it('agrupa los eventos por día y marca hoy', async () => {
-    await crearEvento('Reunión de hoy', 2);
+    await crearEvento('Reunión de hoy', 10);
     renderConRuta(<AgendaView />);
 
     expect(await screen.findByText('Reunión de hoy')).toBeInTheDocument();
@@ -39,8 +44,8 @@ describe('AgendaView', () => {
     const evento = await nodesRepo.create({
       text: 'Bloque con tareas',
       schedule: {
-        start: enHoras(2).toISOString(),
-        end: enHoras(3).toISOString(),
+        start: hoyALas(14).toISOString(),
+        end: hoyALas(15).toISOString(),
         allDay: false,
       },
     });
@@ -53,7 +58,7 @@ describe('AgendaView', () => {
   });
 
   it('no lista los días que ya pasaron', async () => {
-    await crearEvento('Ayer', -30);
+    await crearEvento('Ayer', 10, -1);
     renderConRuta(<AgendaView />);
 
     expect(await screen.findByText(/la agenda está despejada/i)).toBeInTheDocument();

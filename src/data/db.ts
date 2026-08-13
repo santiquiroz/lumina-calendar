@@ -18,6 +18,25 @@ export class LuminaDb extends Dexie {
       activities: 'id, type, nodeId, at',
       settings: 'key',
     });
+
+    // v2 agrega el origen del nodo para poder importar calendarios externos sin
+    // duplicar en cada sincronización.
+    this.version(2)
+      .stores({
+        nodes: 'id, parentId, deletedAt, source, externalId, *tags',
+        activities: 'id, type, nodeId, at',
+        settings: 'key',
+      })
+      .upgrade((transaccion) =>
+        transaccion
+          .table<LuminaNode>('nodes')
+          .toCollection()
+          .modify((nodo) => {
+            nodo.source = 'lumina';
+            nodo.externalId = null;
+            nodo.externalCalendar = null;
+          }),
+      );
   }
 }
 

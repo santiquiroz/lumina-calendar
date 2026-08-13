@@ -17,6 +17,8 @@ import {
 import { currentPersistence, requestPersistentStorage } from '@/data/storagePersistence';
 import type { PersistenceState } from '@/data/storagePersistence';
 import { AttributionNotice } from '@/ui/AttributionNotice';
+import { CalendarsSection } from '@/ui/CalendarsSection';
+import { RemindersSection } from '@/ui/RemindersSection';
 import { UpdateSection } from '@/ui/UpdateSection';
 import { Button } from '@/ui/Button';
 import { Card } from '@/ui/Card';
@@ -182,6 +184,10 @@ export function SettingsView() {
           </p>
         ) : null}
       </Card>
+
+      <CalendarsSection />
+
+      <RemindersSection />
 
       <UpdateSection />
 

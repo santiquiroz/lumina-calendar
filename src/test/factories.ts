@@ -8,6 +8,9 @@ export function buildNode(overrides: Partial<LuminaNode> = {}): LuminaNode {
   return {
     id: `n${contador}`,
     parentId: null,
+    source: 'lumina',
+    externalId: null,
+    externalCalendar: null,
     text: `Nodo ${contador}`,
     done: false,
     order: 'U',

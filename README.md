@@ -93,6 +93,42 @@ nueva, muestra un banner con el enlace al APK. Podés posponer una versión
 concreta y no vuelve a insistir con esa; la siguiente sí avisa. Sin red no pasa
 nada: el chequeo falla en silencio. También hay un botón manual en Ajustes.
 
+## Traer calendarios de otro lado
+
+Lumina **solo lee**: nunca escribe en tus calendarios, y nada de lo que importa
+sale de tu dispositivo. Hay tres caminos, según dónde estés:
+
+| Camino | Dónde funciona | Qué cubre |
+|---|---|---|
+| Calendarios del teléfono | App de Android | Todo lo que tu teléfono ya sincroniza: Google, Outlook, Samsung, Exchange |
+| Suscripción por dirección iCal | App y navegador | Google, Outlook, iCloud y cualquier calendario que publique un `.ics` |
+| Archivo `.ics` | App y navegador | Exportaciones puntuales de cualquier calendario |
+
+El primero es el recomendado en el teléfono: no necesita cuentas, ni permisos de
+Google, ni que Lumina hable con ningún servidor. Lee el calendario que Android ya
+tiene sincronizado, con permiso de solo lectura, y trae los eventos **ya
+expandidos**, así que las repeticiones aparecen bien sin que Lumina tenga que
+interpretar reglas de recurrencia.
+
+Los eventos importados se marcan con un punto y se pueden desglosar en subtareas
+como cualquier otro. Al volver a sincronizar se actualiza su nombre y su horario,
+pero **tus subtareas se conservan**; si el evento desaparece del origen,
+desaparece de Lumina. Si la fuente no responde, no se borra nada: una caída de
+red no puede leerse como "ya no hay eventos".
+
+Un límite conocido de las dos vías `.ics`: **los eventos repetidos entran solo
+una vez**, porque Lumina todavía no interpreta reglas de recurrencia. Los
+calendarios del teléfono no tienen ese problema, porque Android entrega las
+repeticiones ya expandidas. Si vivís de eventos que se repiten, usá esa vía.
+
+## Avisos con la app cerrada
+
+La versión de Android programa dos notificaciones por bloque: una cuando empieza
+y otra cuando entra en ámbar, con el mismo margen proporcional que ves en
+pantalla. Se reprograman solas cuando cambiás algo y se pueden apagar enteras
+desde Ajustes. En el navegador esto no existe: es una limitación real de las PWA,
+no una decisión.
+
 ## Tus datos
 
 Viven en IndexedDB, en tu navegador. Nadie más los ve porque no hay a dónde

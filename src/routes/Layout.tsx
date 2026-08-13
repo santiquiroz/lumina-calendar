@@ -1,4 +1,6 @@
 import { Outlet } from 'react-router';
+import { useCalendarSync } from '@/hooks/useCalendarSync';
+import { useReminderSync } from '@/hooks/useReminders';
 import { useUpdate } from '@/hooks/useUpdate';
 import { BottomNav } from '@/ui/BottomNav';
 import { NewEventSheet } from '@/ui/NewEventSheet';
@@ -9,6 +11,8 @@ import { UpdateBanner } from '@/ui/UpdateBanner';
 
 export function Layout() {
   const { disponible, descartar } = useUpdate();
+  useCalendarSync();
+  useReminderSync();
 
   return (
     <div className="flex h-full min-h-dvh bg-surface">
