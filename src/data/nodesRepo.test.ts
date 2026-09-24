@@ -7,6 +7,7 @@ import { nodesRepo } from './nodesRepo';
 beforeEach(async () => {
   await db.nodes.clear();
   await db.activities.clear();
+  await db.settings.clear();
 });
 
 describe('nodesRepo.create', () => {
@@ -148,6 +149,17 @@ describe('nodesRepo.softDelete y restore', () => {
     expect((await db.nodes.get(hijo.id))?.deletedAt).toBeNull();
   });
 
+  it('restaurar un descendiente restaura todo lo que se borró con él', async () => {
+    const raiz = await nodesRepo.create({ text: 'Raíz' });
+    const hijo = await nodesRepo.create({ text: 'Hijo', parentId: raiz.id });
+
+    await nodesRepo.softDelete(raiz.id);
+    await nodesRepo.restore(hijo.id);
+
+    expect((await db.nodes.get(raiz.id))?.deletedAt).toBeNull();
+    expect((await db.nodes.get(hijo.id))?.deletedAt).toBeNull();
+  });
+
   it('no restaura un subárbol borrado en otro momento', async () => {
     const primero = await nodesRepo.create({ text: 'Primero' });
     await nodesRepo.softDelete(primero.id);
@@ -262,5 +274,65 @@ describe('nodesRepo.syncExternal y removeSource con alcance', () => {
 
     expect(await nodesRepo.removeSource('ics', delPrefijoA)).toBe(1);
     expect(await nodesRepo.countBySource('ics')).toBe(1);
+  });
+});
+
+describe('nodesRepo: subárboles de eventos externos', () => {
+  const VENTANA = { desde: '2026-08-01T00:00:00.000Z', hasta: '2026-09-01T00:00:00.000Z' };
+  const HORARIO = buildSchedule('2026-08-13T14:00:00.000Z', 60);
+
+  function evento(externalId: string) {
+    return { externalId, text: externalId, schedule: HORARIO, calendar: null };
+  }
+
+  async function externoConSubtarea(externalId: string) {
+    await nodesRepo.syncExternal('ics', [evento(externalId)], VENTANA);
+    const externo = (await db.nodes.toArray()).find((nodo) => nodo.externalId === externalId);
+    const subtarea = await nodesRepo.create({ text: 'Subtarea', parentId: externo?.id });
+    return { externo: externo as NonNullable<typeof externo>, subtarea };
+  }
+
+  it('removeSource marca también a los descendientes con la misma marca', async () => {
+    const { externo, subtarea } = await externoConSubtarea('a:1');
+
+    await nodesRepo.removeSource('ics');
+
+    const padre = await db.nodes.get(externo.id);
+    expect(padre?.deletedAt).not.toBeNull();
+    expect((await db.nodes.get(subtarea.id))?.deletedAt).toBe(padre?.deletedAt);
+    expect(await nodesRepo.listIdeas()).toEqual([]);
+  });
+
+  it('revivir un evento no revive el subárbol de otro borrado en la misma sincronización', async () => {
+    const primero = await externoConSubtarea('a:1');
+    const segundo = await externoConSubtarea('a:2');
+    await nodesRepo.syncExternal('ics', [], VENTANA);
+
+    await nodesRepo.syncExternal('ics', [evento('a:1')], VENTANA);
+
+    expect((await db.nodes.get(primero.subtarea.id))?.deletedAt).toBeNull();
+    expect((await db.nodes.get(segundo.externo.id))?.deletedAt).not.toBeNull();
+    expect((await db.nodes.get(segundo.subtarea.id))?.deletedAt).not.toBeNull();
+  });
+
+  it('un evento externo descartado y luego restaurado vuelve a sincronizarse', async () => {
+    const { externo } = await externoConSubtarea('a:1');
+    await nodesRepo.softDelete(externo.id);
+    await nodesRepo.restore(externo.id);
+
+    const movido = { ...evento('a:1'), text: 'Movido' };
+    await nodesRepo.syncExternal('ics', [movido], VENTANA);
+
+    expect((await db.nodes.get(externo.id))?.text).toBe('Movido');
+  });
+
+  it('descartar un nodo propio no oculta nada del origen externo', async () => {
+    const { externo, subtarea } = await externoConSubtarea('a:1');
+    await nodesRepo.softDelete(subtarea.id);
+    await nodesRepo.syncExternal('ics', [], VENTANA);
+
+    await nodesRepo.syncExternal('ics', [evento('a:1')], VENTANA);
+
+    expect((await db.nodes.get(externo.id))?.deletedAt).toBeNull();
   });
 });

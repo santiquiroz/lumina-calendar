@@ -5,6 +5,8 @@ import {
   MAX_DEPTH,
   ancestorsOf,
   assertMoveAllowed,
+  deletedSubtreeOf,
+  deletionRootOf,
   depthOf,
   descendantsOf,
   indexNodes,
@@ -101,6 +103,55 @@ describe('descendantsOf y subtreeHeight', () => {
     const index = indexNodes(buildChain(4));
     expect(subtreeHeight(index, 'c0')).toBe(3);
     expect(subtreeHeight(index, 'c3')).toBe(0);
+  });
+});
+
+describe('deletedSubtreeOf', () => {
+  const MARCA = '2026-08-12T10:00:00.000Z';
+  const OTRA_MARCA = '2026-08-11T10:00:00.000Z';
+
+  it('devuelve la raíz y los descendientes borrados con su misma marca', () => {
+    const nodos = [
+      buildNode({ id: 'r', deletedAt: MARCA }),
+      buildNode({ id: 'a', parentId: 'r', deletedAt: MARCA }),
+      buildNode({ id: 'a1', parentId: 'a', deletedAt: MARCA }),
+      buildNode({ id: 'b', parentId: 'r', deletedAt: OTRA_MARCA }),
+      buildNode({ id: 'b1', parentId: 'b', deletedAt: OTRA_MARCA }),
+      buildNode({ id: 'otra', deletedAt: MARCA }),
+    ];
+
+    expect(deletedSubtreeOf(nodos, 'r').map((n) => n.id).sort()).toEqual(['a', 'a1', 'r']);
+  });
+
+  it('devuelve vacío si el nodo no existe o no está borrado', () => {
+    const nodos = [buildNode({ id: 'vivo' })];
+
+    expect(deletedSubtreeOf(nodos, 'vivo')).toEqual([]);
+    expect(deletedSubtreeOf(nodos, 'fantasma')).toEqual([]);
+  });
+});
+
+describe('deletionRootOf', () => {
+  const MARCA = '2026-08-12T10:00:00.000Z';
+
+  it('sube hasta el ancestro más alto borrado con la misma marca', () => {
+    const nodos = [
+      buildNode({ id: 'vivo' }),
+      buildNode({ id: 'r', parentId: 'vivo', deletedAt: MARCA }),
+      buildNode({ id: 'a', parentId: 'r', deletedAt: MARCA }),
+      buildNode({ id: 'a1', parentId: 'a', deletedAt: MARCA }),
+    ];
+
+    expect(deletionRootOf(nodos, 'a1')).toBe('r');
+  });
+
+  it('se detiene en un padre borrado en otro momento', () => {
+    const nodos = [
+      buildNode({ id: 'r', deletedAt: '2026-08-11T10:00:00.000Z' }),
+      buildNode({ id: 'a', parentId: 'r', deletedAt: MARCA }),
+    ];
+
+    expect(deletionRootOf(nodos, 'a')).toBe('a');
   });
 });
 

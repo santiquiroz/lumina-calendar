@@ -1,10 +1,20 @@
 import { dayBounds, type CalendarDay } from '@/domain/calendarDay';
 import { DomainError } from '@/domain/errors';
 import { orderBetween } from '@/domain/order';
-import { assertMoveAllowed, depthOf, descendantsOf, indexNodes, MAX_DEPTH } from '@/domain/tree';
+import {
+  assertMoveAllowed,
+  deletedSubtreeOf,
+  deletionRootOf,
+  depthOf,
+  descendantsOf,
+  indexNodes,
+  MAX_DEPTH,
+  type TreeIndex,
+} from '@/domain/tree';
 import type { EventColorKey, LuminaNode, NodeId, NodeSource, Schedule } from '@/domain/types';
 import { crearActividad } from './activityRepo';
 import { ahoraIso, db, nuevoId } from './db';
+import { settingsRepo } from './settingsRepo';
 
 export interface CreateNodeInput {
   text: string;
@@ -36,6 +46,9 @@ export interface SyncResult {
 export type AlcanceExterno = (nodo: LuminaNode) => boolean;
 
 const todoElOrigen: AlcanceExterno = () => true;
+
+// externalId de los eventos que la persona descartó: la sincronización no los revive.
+const CLAVE_EVENTOS_OCULTOS = 'calendarios.ocultos';
 
 export interface MovePosition {
   beforeId?: NodeId | null;
@@ -109,6 +122,55 @@ function nodoBase(input: CreateNodeInput, order: string): LuminaNode {
   };
 }
 
+function subarbolVivo(index: TreeIndex, id: NodeId): LuminaNode[] {
+  return [index.byId.get(id) as LuminaNode, ...descendantsOf(index, id)];
+}
+
+function idsExternos(nodos: LuminaNode[]): string[] {
+  return nodos
+    .filter((nodo) => nodo.source !== 'lumina' && nodo.externalId !== null)
+    .map((nodo) => nodo.externalId as string);
+}
+
+async function listarOcultos(): Promise<string[]> {
+  return settingsRepo.get<string[]>(CLAVE_EVENTOS_OCULTOS, []);
+}
+
+async function ocultar(externalIds: string[]): Promise<void> {
+  if (externalIds.length === 0) return;
+  const actuales = await listarOcultos();
+  await settingsRepo.set(CLAVE_EVENTOS_OCULTOS, [...new Set([...actuales, ...externalIds])]);
+}
+
+async function mostrar(externalIds: string[]): Promise<void> {
+  if (externalIds.length === 0) return;
+  const quitados = new Set(externalIds);
+  const actuales = await listarOcultos();
+  await settingsRepo.set(
+    CLAVE_EVENTOS_OCULTOS,
+    actuales.filter((externalId) => !quitados.has(externalId)),
+  );
+}
+
+async function marcarBorrados(nodos: LuminaNode[], marca: string): Promise<void> {
+  const ids = nodos.map((nodo) => nodo.id);
+  await db.nodes.where('id').anyOf(ids).modify({ deletedAt: marca, updatedAt: marca });
+}
+
+// Un borrado arrastra a los descendientes con la misma marca (invariante 5), así
+// las subtareas no quedan huérfanas convertidas en ideas del Canvas.
+async function borrarSubarboles(raices: LuminaNode[], marca: string): Promise<void> {
+  const index = indexNodes(await db.nodes.toArray());
+  await marcarBorrados(raices.flatMap((raiz) => subarbolVivo(index, raiz.id)), marca);
+}
+
+async function restaurarSubarbol(id: NodeId): Promise<LuminaNode[]> {
+  const subarbol = deletedSubtreeOf(await db.nodes.toArray(), id);
+  const ids = subarbol.map((nodo) => nodo.id);
+  await db.nodes.where('id').anyOf(ids).modify({ deletedAt: null });
+  return subarbol;
+}
+
 export const nodesRepo = {
   async create(input: CreateNodeInput): Promise<LuminaNode> {
     if (input.schedule) validarHorario(input.schedule);
@@ -177,17 +239,20 @@ export const nodesRepo = {
     const index = indexNodes(todos);
     if (!index.byId.has(id)) throw new DomainError('NOT_FOUND', `No existe el nodo ${id}`);
 
-    const ids = [id, ...descendantsOf(index, id).map((n) => n.id)];
-    await db.nodes.where('id').anyOf(ids).modify({ deletedAt: marca, updatedAt: marca });
+    const subarbol = subarbolVivo(index, id);
+    await db.transaction('rw', db.nodes, db.settings, async () => {
+      await marcarBorrados(subarbol, marca);
+      await ocultar(idsExternos(subarbol));
+    });
     return marca;
   },
 
   async restore(id: NodeId): Promise<void> {
-    const nodo = await db.nodes.get(id);
-    if (!nodo?.deletedAt) return;
-
-    const marca = nodo.deletedAt;
-    await db.nodes.where('deletedAt').equals(marca).modify({ deletedAt: null });
+    await db.transaction('rw', db.nodes, db.settings, async () => {
+      const raiz = deletionRootOf(await db.nodes.toArray(), id);
+      const restaurados = await restaurarSubarbol(raiz);
+      await mostrar(idsExternos(restaurados));
+    });
   },
 
   listAll(): Promise<LuminaNode[]> {
@@ -243,6 +308,7 @@ export const nodesRepo = {
   // y horario de lo conocido (sin tocar subtareas ni completados que agregó la
   // persona) y borra lo que desapareció, pero solo dentro de la ventana y del
   // alcance que se sincronizaron, para no arrastrar eventos que ni se consultaron.
+  // Lo que la persona descartó no vuelve.
   async syncExternal(
     source: Exclude<NodeSource, 'lumina'>,
     eventos: ExternalEvent[],
@@ -255,11 +321,12 @@ export const nodesRepo = {
     );
     const porId = new Map(existentes.map((nodo) => [nodo.externalId as string, nodo]));
     const vistos = new Set(eventos.map((evento) => evento.externalId));
+    const ocultos = new Set(await listarOcultos());
 
     let creados = 0;
     let actualizados = 0;
 
-    for (const evento of eventos) {
+    for (const evento of eventos.filter((e) => !ocultos.has(e.externalId))) {
       const previo = porId.get(evento.externalId);
 
       if (!previo) {
@@ -287,6 +354,7 @@ export const nodesRepo = {
         previo.deletedAt !== null;
 
       if (cambio) {
+        if (previo.deletedAt !== null) await restaurarSubarbol(previo.id);
         await db.nodes.update(previo.id, {
           text: evento.text,
           schedule: evento.schedule,
@@ -308,9 +376,7 @@ export const nodesRepo = {
         nodo.schedule.start < ventana.hasta,
     );
 
-    for (const nodo of desaparecidos) {
-      await db.nodes.update(nodo.id, { deletedAt: ahora, updatedAt: ahora });
-    }
+    await borrarSubarboles(desaparecidos, ahora);
 
     return { creados, actualizados, eliminados: desaparecidos.length };
   },
@@ -328,9 +394,7 @@ export const nodesRepo = {
     const objetivos = (await db.nodes.toArray()).filter(
       (nodo) => nodo.source === source && nodo.deletedAt === null && alcance(nodo),
     );
-    for (const nodo of objetivos) {
-      await db.nodes.update(nodo.id, { deletedAt: ahora, updatedAt: ahora });
-    }
+    await borrarSubarboles(objetivos, ahora);
     return objetivos.length;
   },
 };

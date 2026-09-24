@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from './db';
 import {
   agregarSuscripcion,
@@ -115,6 +115,66 @@ describe('importarIcs', () => {
     ]);
 
     expect((await importarIcs(lejano, 'trabajo.ics', AHORA)).creados).toBe(0);
+  });
+});
+
+describe('eventos importados descartados o desaparecidos', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function importarConSubtarea() {
+    await importarIcs(UNA_REUNION, 'trabajo.ics', AHORA);
+    const evento = (await db.nodes.toArray())[0];
+    const subtarea = await nodesRepo.create({ text: 'Preparar guion', parentId: evento.id });
+    return { evento, subtarea };
+  }
+
+  it('un evento que la persona descartó no vuelve al reimportar', async () => {
+    await importarIcs(UNA_REUNION, 'trabajo.ics', AHORA);
+    const evento = (await db.nodes.toArray())[0];
+    await nodesRepo.softDelete(evento.id);
+
+    const resultado = await importarIcs(UNA_REUNION, 'trabajo.ics', AHORA);
+
+    expect(resultado).toEqual({ creados: 0, actualizados: 0, eliminados: 0 });
+    expect((await db.nodes.get(evento.id))?.deletedAt).not.toBeNull();
+  });
+
+  it('las subtareas se van con el evento que desapareció del origen y no quedan como ideas', async () => {
+    const { evento, subtarea } = await importarConSubtarea();
+
+    await importarIcs(ics([]), 'trabajo.ics', AHORA);
+
+    const padre = await db.nodes.get(evento.id);
+    expect(padre?.deletedAt).not.toBeNull();
+    expect((await db.nodes.get(subtarea.id))?.deletedAt).toBe(padre?.deletedAt);
+    expect(await nodesRepo.listIdeas()).toEqual([]);
+  });
+
+  it('al volver al origen, el evento regresa con sus subtareas', async () => {
+    const { evento, subtarea } = await importarConSubtarea();
+    await importarIcs(ics([]), 'trabajo.ics', AHORA);
+
+    await importarIcs(UNA_REUNION, 'trabajo.ics', AHORA);
+
+    expect((await db.nodes.get(evento.id))?.deletedAt).toBeNull();
+    expect((await db.nodes.get(subtarea.id))?.deletedAt).toBeNull();
+    expect((await nodesRepo.listSubtree(evento.id)).map((n) => n.text)).toEqual(['Preparar guion']);
+  });
+
+  it('al volver al origen no revive una subtarea que la persona ya había descartado', async () => {
+    const { evento, subtarea } = await importarConSubtarea();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-12T13:00:00.000Z'));
+    const marcaSubtarea = await nodesRepo.softDelete(subtarea.id);
+    vi.setSystemTime(new Date('2026-08-12T14:00:00.000Z'));
+    await importarIcs(ics([]), 'trabajo.ics', AHORA);
+
+    await importarIcs(UNA_REUNION, 'trabajo.ics', AHORA);
+
+    expect((await db.nodes.get(evento.id))?.deletedAt).toBeNull();
+    expect((await db.nodes.get(subtarea.id))?.deletedAt).toBe(marcaSubtarea);
   });
 });
 
