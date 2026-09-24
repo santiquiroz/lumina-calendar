@@ -226,3 +226,41 @@ describe('nodesRepo.search', () => {
     expect(await nodesRepo.search('revisión')).toHaveLength(0);
   });
 });
+
+describe('nodesRepo.syncExternal y removeSource con alcance', () => {
+  const VENTANA = { desde: '2026-08-01T00:00:00.000Z', hasta: '2026-09-01T00:00:00.000Z' };
+  const HORARIO = buildSchedule('2026-08-13T14:00:00.000Z', 60);
+
+  function evento(externalId: string) {
+    return { externalId, text: externalId, schedule: HORARIO, calendar: null };
+  }
+
+  const delPrefijoA = (nodo: { externalId: string | null }) =>
+    nodo.externalId?.startsWith('a:') ?? false;
+
+  it('solo borra los ausentes dentro del alcance', async () => {
+    await nodesRepo.syncExternal('ics', [evento('a:1'), evento('b:1')], VENTANA);
+
+    const resultado = await nodesRepo.syncExternal('ics', [], VENTANA, delPrefijoA);
+
+    expect(resultado.eliminados).toBe(1);
+    const vivos = (await db.nodes.toArray()).filter((nodo) => nodo.deletedAt === null);
+    expect(vivos.map((nodo) => nodo.externalId)).toEqual(['b:1']);
+  });
+
+  it('empareja un evento conocido aunque esté fuera del alcance, sin duplicarlo', async () => {
+    await nodesRepo.syncExternal('ics', [evento('b:1')], VENTANA);
+
+    const resultado = await nodesRepo.syncExternal('ics', [evento('b:1')], VENTANA, delPrefijoA);
+
+    expect(resultado.creados).toBe(0);
+    expect(await db.nodes.count()).toBe(1);
+  });
+
+  it('removeSource solo quita los nodos del alcance', async () => {
+    await nodesRepo.syncExternal('ics', [evento('a:1'), evento('b:1')], VENTANA);
+
+    expect(await nodesRepo.removeSource('ics', delPrefijoA)).toBe(1);
+    expect(await nodesRepo.countBySource('ics')).toBe(1);
+  });
+});

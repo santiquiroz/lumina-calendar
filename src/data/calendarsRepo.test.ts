@@ -156,3 +156,102 @@ describe('suscripciones', () => {
     expect(await nodesRepo.countBySource('ics')).toBe(0);
   });
 });
+
+const OTRA_REUNION = ics([
+  { uid: 'evento-2', titulo: 'Otra reunión', inicio: '20260814T140000Z', fin: '20260814T150000Z' },
+]);
+
+function porDireccion(textos: Record<string, string | null>): typeof fetch {
+  return vi.fn(async (url: string) => {
+    const texto = textos[url];
+    if (texto === null || texto === undefined) throw new TypeError('sin red');
+    return { ok: true, text: async () => texto } as unknown as Response;
+  }) as unknown as typeof fetch;
+}
+
+async function textosVivos(): Promise<string[]> {
+  const nodos = await db.nodes.toArray();
+  return nodos
+    .filter((nodo) => nodo.deletedAt === null)
+    .map((nodo) => nodo.text)
+    .sort();
+}
+
+describe('vías .ics independientes', () => {
+  it('importar un segundo archivo conserva los eventos del primero', async () => {
+    await importarIcs(UNA_REUNION, 'a.ics', AHORA);
+    const resultado = await importarIcs(OTRA_REUNION, 'b.ics', AHORA);
+
+    expect(resultado.eliminados).toBe(0);
+    expect(await textosVivos()).toEqual(['Otra reunión', 'Reunión importada']);
+  });
+
+  it('sincronizar sin suscripciones no toca lo importado por archivo', async () => {
+    await importarIcs(UNA_REUNION, 'trabajo.ics', AHORA);
+
+    const resultado = await sincronizarSuscripciones(respuesta(''), AHORA);
+
+    expect(resultado.eliminados).toBe(0);
+    expect(await nodesRepo.countBySource('ics')).toBe(1);
+  });
+
+  it('importar un archivo no borra los eventos de una suscripción', async () => {
+    await agregarSuscripcion('Trabajo', 'https://ejemplo.com/cal.ics');
+    await sincronizarSuscripciones(respuesta(UNA_REUNION), AHORA);
+
+    const resultado = await importarIcs(OTRA_REUNION, 'personal.ics', AHORA);
+
+    expect(resultado.eliminados).toBe(0);
+    expect(await textosVivos()).toEqual(['Otra reunión', 'Reunión importada']);
+  });
+
+  it('olvidar suscripciones no borra los eventos de archivo', async () => {
+    await importarIcs(OTRA_REUNION, 'personal.ics', AHORA);
+    await agregarSuscripcion('Trabajo', 'https://ejemplo.com/cal.ics');
+    await sincronizarSuscripciones(respuesta(UNA_REUNION), AHORA);
+
+    expect(await olvidarSuscripciones()).toBe(1);
+    expect(await textosVivos()).toEqual(['Otra reunión']);
+  });
+
+  it('con una suscripción caída, la que respondió concilia y la caída conserva lo suyo', async () => {
+    await agregarSuscripcion('Trabajo', 'https://trabajo.ejemplo/cal.ics');
+    await agregarSuscripcion('Casa', 'https://casa.ejemplo/cal.ics');
+    await sincronizarSuscripciones(
+      porDireccion({
+        'https://trabajo.ejemplo/cal.ics': UNA_REUNION,
+        'https://casa.ejemplo/cal.ics': OTRA_REUNION,
+      }),
+      AHORA,
+    );
+
+    const resultado = await sincronizarSuscripciones(
+      porDireccion({ 'https://trabajo.ejemplo/cal.ics': ics([]), 'https://casa.ejemplo/cal.ics': null }),
+      AHORA,
+    );
+
+    expect(resultado.eliminados).toBe(1);
+    expect(await textosVivos()).toEqual(['Otra reunión']);
+  });
+
+  it('quitar una suscripción quita solo sus eventos', async () => {
+    await importarIcs(OTRA_REUNION, 'personal.ics', AHORA);
+    const trabajo = await agregarSuscripcion('Trabajo', 'https://ejemplo.com/cal.ics');
+    await sincronizarSuscripciones(respuesta(UNA_REUNION), AHORA);
+
+    await quitarSuscripcion(trabajo.id);
+
+    expect(await textosVivos()).toEqual(['Otra reunión']);
+  });
+
+  it('empareja los eventos heredados sin recrearlos', async () => {
+    await importarIcs(UNA_REUNION, 'trabajo.ics', AHORA);
+    const [heredado] = await db.nodes.toArray();
+
+    const resultado = await importarIcs(UNA_REUNION, 'trabajo.ics', AHORA);
+
+    expect(heredado.externalId).toBe('archivo:evento-1');
+    expect(resultado.creados).toBe(0);
+    expect((await db.nodes.toArray()).map((nodo) => nodo.id)).toEqual([heredado.id]);
+  });
+});

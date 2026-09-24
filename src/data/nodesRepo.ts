@@ -31,6 +31,12 @@ export interface SyncResult {
   eliminados: number;
 }
 
+// Qué nodos de un origen le pertenecen a una vía concreta (un archivo, una
+// suscripción): solo esos se pueden dar por desaparecidos o quitar.
+export type AlcanceExterno = (nodo: LuminaNode) => boolean;
+
+const todoElOrigen: AlcanceExterno = () => true;
+
 export interface MovePosition {
   beforeId?: NodeId | null;
   afterId?: NodeId | null;
@@ -235,15 +241,13 @@ export const nodesRepo = {
 
   // Trae el calendario externo al modelo propio: crea lo nuevo, actualiza texto
   // y horario de lo conocido (sin tocar subtareas ni completados que agregó la
-  // persona) y borra lo que desapareció, pero solo dentro de la ventana que se
-  // sincronizó, para no arrastrar eventos que ni se consultaron.
+  // persona) y borra lo que desapareció, pero solo dentro de la ventana y del
+  // alcance que se sincronizaron, para no arrastrar eventos que ni se consultaron.
   async syncExternal(
     source: Exclude<NodeSource, 'lumina'>,
     eventos: ExternalEvent[],
     ventana: { desde: string; hasta: string },
-    // Una fuente que no respondió no puede interpretarse como "ya no hay nada":
-    // borrar en ese caso destruiría eventos por un problema de red.
-    borrarAusentes = true,
+    alcance: AlcanceExterno = todoElOrigen,
   ): Promise<SyncResult> {
     const ahora = ahoraIso();
     const existentes = (await db.nodes.toArray()).filter(
@@ -296,7 +300,7 @@ export const nodesRepo = {
 
     const desaparecidos = existentes.filter(
       (nodo) =>
-        borrarAusentes &&
+        alcance(nodo) &&
         nodo.deletedAt === null &&
         !vistos.has(nodo.externalId as string) &&
         nodo.schedule !== null &&
@@ -316,10 +320,13 @@ export const nodesRepo = {
     return nodos.filter((nodo) => nodo.source === source && nodo.deletedAt === null).length;
   },
 
-  async removeSource(source: Exclude<NodeSource, 'lumina'>): Promise<number> {
+  async removeSource(
+    source: Exclude<NodeSource, 'lumina'>,
+    alcance: AlcanceExterno = todoElOrigen,
+  ): Promise<number> {
     const ahora = ahoraIso();
     const objetivos = (await db.nodes.toArray()).filter(
-      (nodo) => nodo.source === source && nodo.deletedAt === null,
+      (nodo) => nodo.source === source && nodo.deletedAt === null && alcance(nodo),
     );
     for (const nodo of objetivos) {
       await db.nodes.update(nodo.id, { deletedAt: ahora, updatedAt: ahora });
