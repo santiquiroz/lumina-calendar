@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { buildNode, buildSchedule } from '@/test/factories';
-import { allReminders, reminderId, remindersFor, REMINDER_WINDOW_DAYS } from './reminders';
+import {
+  allReminders,
+  MAX_REMINDERS,
+  reminderId,
+  remindersFor,
+  REMINDER_WINDOW_DAYS,
+} from './reminders';
 
 const AHORA = new Date('2026-08-12T08:00:00.000Z');
 
@@ -94,5 +100,19 @@ describe('allReminders', () => {
   it('junta los avisos de todos los eventos', () => {
     const nodos = [eventoDe(60), eventoDe(30, '2026-08-13T09:00:00.000Z'), buildNode({})];
     expect(allReminders(nodos, AHORA)).toHaveLength(4);
+  });
+
+  it('con muchos eventos futuros se queda con los más próximos, en orden cronológico', () => {
+    const base = new Date('2026-08-12T09:00:00.000Z').getTime();
+    const nodos = Array.from({ length: 500 }, (_, i) =>
+      eventoDe(60, new Date(base + (499 - i) * 3_600_000).toISOString()),
+    );
+
+    const avisos = allReminders(nodos, AHORA);
+    const horas = avisos.map((aviso) => aviso.at.getTime());
+
+    expect(avisos).toHaveLength(MAX_REMINDERS);
+    expect(horas).toEqual([...horas].sort((a, b) => a - b));
+    expect(avisos[0].at.toISOString()).toBe('2026-08-12T09:00:00.000Z');
   });
 });

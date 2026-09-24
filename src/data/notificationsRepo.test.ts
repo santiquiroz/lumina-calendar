@@ -99,6 +99,18 @@ describe('sincronizarAvisos', () => {
     expect(extras.map((extra) => extra.kind)).toEqual(['inicio', 'ambar']);
     expect(extras.every((extra) => extra.nodeId === evento.id)).toBe(true);
   });
+
+  it('todos los avisos pueden despertar al teléfono y usan el ícono de Lumina', async () => {
+    await sincronizarAvisos([eventoFuturo(), eventoFuturo()]);
+
+    const avisos = plugin.programadas as {
+      schedule: { allowWhileIdle: boolean };
+      smallIcon: string;
+    }[];
+    expect(avisos).toHaveLength(4);
+    expect(avisos.every((aviso) => aviso.schedule.allowWhileIdle === true)).toBe(true);
+    expect(avisos.every((aviso) => aviso.smallIcon === 'ic_stat_lumina')).toBe(true);
+  });
 });
 
 describe('avisosPendientes', () => {

@@ -6,6 +6,8 @@ import { settingsRepo } from './settingsRepo';
 
 export const CLAVE_AVISOS = 'avisos.activados';
 
+const ICONO_AVISO = 'ic_stat_lumina';
+
 export type EstadoAvisos = 'activos' | 'sin-permiso' | 'apagados' | 'no-soportado';
 
 export async function avisosActivados(): Promise<boolean> {
@@ -29,8 +31,8 @@ function aNotificacion(aviso: Reminder) {
     id: aviso.id,
     title: aviso.titulo,
     body: aviso.cuerpo,
-    schedule: { at: aviso.at, allowWhileIdle: aviso.kind === 'ambar' },
-    smallIcon: 'ic_stat_icon_config_sample',
+    schedule: { at: aviso.at, allowWhileIdle: true },
+    smallIcon: ICONO_AVISO,
     extra: { nodeId: aviso.nodeId, kind: aviso.kind },
   };
 }

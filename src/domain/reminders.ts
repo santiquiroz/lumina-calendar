@@ -14,6 +14,10 @@ export interface Reminder {
 
 export const REMINDER_WINDOW_DAYS = 30;
 
+// Android limita las alarmas pendientes por app (Samsung ronda las 500), así que
+// solo se programan los avisos más próximos; el resto entra en la siguiente sincronización.
+export const MAX_REMINDERS = 64;
+
 // Los identificadores de notificación en Android son enteros de 32 bits, así que
 // el id del nodo (un UUID) se reduce a un hash estable y determinista: el mismo
 // nodo siempre reprograma sobre su propio aviso en vez de duplicarlo.
@@ -67,6 +71,13 @@ export function remindersFor(nodo: LuminaNode, now: Date): Reminder[] {
   );
 }
 
+function porHora(a: Reminder, b: Reminder): number {
+  return a.at.getTime() - b.at.getTime();
+}
+
 export function allReminders(nodos: LuminaNode[], now: Date): Reminder[] {
-  return nodos.flatMap((nodo) => remindersFor(nodo, now));
+  return nodos
+    .flatMap((nodo) => remindersFor(nodo, now))
+    .sort(porHora)
+    .slice(0, MAX_REMINDERS);
 }
