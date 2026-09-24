@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { nodesRepo } from '@/data/nodesRepo';
 import { limpiarBase, renderConRuta } from '@/test/render';
@@ -33,6 +33,73 @@ describe('DayView', () => {
     renderConRuta(<DayView />);
 
     expect(await screen.findByText('Reunión de equipo')).toBeInTheDocument();
+  });
+
+  it('muestra los eventos de todo el día en su propia franja, fuera de la grilla', async () => {
+    const inicio = hoyALas(0);
+    const fin = new Date(inicio);
+    fin.setDate(fin.getDate() + 1);
+    const festivo = await nodesRepo.create({
+      text: 'Día festivo',
+      schedule: { start: inicio.toISOString(), end: fin.toISOString(), allDay: true },
+    });
+    await nodesRepo.create({
+      text: 'Reunión de equipo',
+      schedule: {
+        start: hoyALas(10).toISOString(),
+        end: hoyALas(11).toISOString(),
+        allDay: false,
+      },
+    });
+
+    renderConRuta(<DayView />);
+
+    const franja = await screen.findByRole('region', { name: 'Todo el día' });
+    expect(within(franja).getByRole('link', { name: /Día festivo/ })).toHaveAttribute(
+      'href',
+      `/nodo/${festivo.id}`,
+    );
+    expect(within(franja).queryByText('Reunión de equipo')).not.toBeInTheDocument();
+    expect(await screen.findByText('Reunión de equipo')).toBeInTheDocument();
+  });
+
+  it('no muestra la franja de todo el día cuando no hay eventos así', async () => {
+    await nodesRepo.create({
+      text: 'Reunión de equipo',
+      schedule: {
+        start: hoyALas(10).toISOString(),
+        end: hoyALas(11).toISOString(),
+        allDay: false,
+      },
+    });
+
+    renderConRuta(<DayView />);
+
+    await screen.findByText('Reunión de equipo');
+    expect(screen.queryByRole('region', { name: 'Todo el día' })).not.toBeInTheDocument();
+  });
+
+  it('pone en columnas distintas dos bloques que se solapan', async () => {
+    for (const [texto, desde] of [
+      ['Primero', hoyALas(10)],
+      ['Segundo', hoyALas(10, 30)],
+    ] as const) {
+      await nodesRepo.create({
+        text: texto,
+        schedule: {
+          start: desde.toISOString(),
+          end: new Date(desde.getTime() + 3_600_000).toISOString(),
+          allDay: false,
+        },
+      });
+    }
+
+    renderConRuta(<DayView />);
+
+    const primero = (await screen.findByText('Primero')).closest('a') as HTMLElement;
+    const segundo = (await screen.findByText('Segundo')).closest('a') as HTMLElement;
+    expect(primero.style.left).not.toBe(segundo.style.left);
+    expect(primero.style.width).toBe(segundo.style.width);
   });
 
   it('marca en ámbar el bloque que está por terminar', async () => {

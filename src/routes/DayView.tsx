@@ -1,14 +1,17 @@
+import { useMemo } from 'react';
 import { addDays, formatDayLong, toCalendarDay } from '@/domain/calendarDay';
+import { layoutDay } from '@/domain/dayLayout';
 import { useDayNodes, useTreeIndex } from '@/hooks/useNodes';
 import { useNow } from '@/hooks/useNow';
 import { useUiStore } from '@/store/uiStore';
+import { AllDayStrip } from '@/ui/AllDayStrip';
 import { Button } from '@/ui/Button';
 import { DayStrip } from '@/ui/DayStrip';
 import { EmptyState } from '@/ui/EmptyState';
 import { EventBlock } from '@/ui/EventBlock';
 import { IconButton } from '@/ui/IconButton';
 import { NowIndicator } from '@/ui/NowIndicator';
-import { TimelineGrid } from '@/ui/TimelineGrid';
+import { DAY_GRID, TimelineGrid } from '@/ui/TimelineGrid';
 import { IconAdd, IconChevronDown, IconChevronRight, IconSparkles } from '@/ui/icons';
 
 export function DayView() {
@@ -16,6 +19,7 @@ export function DayView() {
   const seleccionarDia = useUiStore((estado) => estado.seleccionarDia);
   const abrirEventoNuevo = useUiStore((estado) => estado.abrirEventoNuevo);
   const eventos = useDayNodes(dia);
+  const distribucion = useMemo(() => layoutDay(eventos, dia, DAY_GRID), [eventos, dia]);
   const index = useTreeIndex();
   const ahora = useNow();
   const esHoy = dia === toCalendarDay(ahora);
@@ -65,14 +69,23 @@ export function DayView() {
           accion={<Button onClick={abrirEventoNuevo}>Crear un evento</Button>}
         />
       ) : (
-        <div className="relative px-2 pt-2">
-          <TimelineGrid>
-            {eventos.map((evento) => (
-              <EventBlock key={evento.id} node={evento} index={index} now={ahora} />
-            ))}
-            {esHoy ? <NowIndicator now={ahora} /> : null}
-          </TimelineGrid>
-        </div>
+        <>
+          <AllDayStrip nodes={distribucion.allDay} />
+          <div className="relative px-2 pt-2">
+            <TimelineGrid>
+              {distribucion.blocks.map(({ node, ...posicion }) => (
+                <EventBlock
+                  key={node.id}
+                  node={node}
+                  position={posicion}
+                  index={index}
+                  now={ahora}
+                />
+              ))}
+              {esHoy ? <NowIndicator now={ahora} /> : null}
+            </TimelineGrid>
+          </div>
+        </>
       )}
     </section>
   );

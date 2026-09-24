@@ -1,9 +1,17 @@
 import type { ReactNode } from 'react';
+import type { DayGrid } from '@/domain/dayLayout';
 
 export const HOUR_HEIGHT_PX = 64;
 export const MIN_BLOCK_PX = 24;
 export const DAY_START_HOUR = 6;
 export const DAY_END_HOUR = 23;
+
+export const DAY_GRID: DayGrid = {
+  startHour: DAY_START_HOUR,
+  endHour: DAY_END_HOUR + 1,
+  hourHeightPx: HOUR_HEIGHT_PX,
+  minBlockPx: MIN_BLOCK_PX,
+};
 
 export function topForTime(iso: string, dayStartHour = DAY_START_HOUR): number {
   const fecha = new Date(iso);
