@@ -383,6 +383,73 @@ describe('parseIcs — duración', () => {
 
     expect(parseIcs(texto)[0].end).toBe('2026-08-12T15:00:00.000Z');
   });
+
+  it('da un minuto de duración cuando DTEND es igual a DTSTART', () => {
+    const texto = ics(
+      'BEGIN:VEVENT',
+      'UID:instante',
+      'DTSTART:20260812T140000Z',
+      'DTEND:20260812T140000Z',
+      'END:VEVENT',
+    );
+
+    expect(parseIcs(texto)[0].end).toBe('2026-08-12T14:01:00.000Z');
+  });
+
+  it('da un minuto de duración cuando DTEND es anterior a DTSTART', () => {
+    const texto = ics(
+      'BEGIN:VEVENT',
+      'UID:al-reves',
+      'DTSTART:20260812T140000Z',
+      'DTEND:20260812T130000Z',
+      'END:VEVENT',
+    );
+
+    expect(parseIcs(texto)[0].end).toBe('2026-08-12T14:01:00.000Z');
+  });
+
+  it('da un minuto de duración con una DURATION negativa', () => {
+    const texto = ics(
+      'BEGIN:VEVENT',
+      'UID:duracion-negativa',
+      'DTSTART:20260812T140000Z',
+      'DURATION:-PT1H',
+      'END:VEVENT',
+    );
+
+    const [evento] = parseIcs(texto);
+
+    expect(new Date(evento.end).getTime()).toBeGreaterThan(new Date(evento.start).getTime());
+    expect(evento.end).toBe('2026-08-12T14:01:00.000Z');
+  });
+
+  it('termina al día siguiente el día completo cuyo DTEND es igual a DTSTART', () => {
+    const texto = ics(
+      'BEGIN:VEVENT',
+      'UID:dia-instante',
+      'DTSTART;VALUE=DATE:20260812',
+      'DTEND;VALUE=DATE:20260812',
+      'END:VEVENT',
+    );
+
+    const [evento] = parseIcs(texto);
+
+    expect(partesLocales(evento.end)).toMatchObject({ anio: 2026, mes: 8, dia: 13, hora: 0 });
+  });
+
+  it('termina al día siguiente el día completo con una DURATION negativa', () => {
+    const texto = ics(
+      'BEGIN:VEVENT',
+      'UID:dia-negativo',
+      'DTSTART;VALUE=DATE:20260812',
+      'DURATION:-P1D',
+      'END:VEVENT',
+    );
+
+    const [evento] = parseIcs(texto);
+
+    expect(partesLocales(evento.end)).toMatchObject({ anio: 2026, mes: 8, dia: 13, hora: 0 });
+  });
 });
 
 describe('parseIcs — texto escapado', () => {

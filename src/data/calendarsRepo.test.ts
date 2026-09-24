@@ -118,6 +118,36 @@ describe('importarIcs', () => {
   });
 });
 
+describe('importarIcs con un fin que no es posterior al inicio', () => {
+  const SIN_DURACION = ics([
+    { uid: 'instante', titulo: 'Instante', inicio: '20260813T140000Z', fin: '20260813T140000Z' },
+  ]);
+  const DURACION_NEGATIVA = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Prueba//ES',
+    'BEGIN:VEVENT',
+    'UID:negativo',
+    'SUMMARY:Negativo',
+    'DTSTART:20260813T160000Z',
+    'DURATION:-PT1H',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  it.each([
+    ['DTEND igual a DTSTART', SIN_DURACION],
+    ['DURATION negativa', DURACION_NEGATIVA],
+  ])('guarda un horario que se puede volver a guardar (%s)', async (_caso, texto) => {
+    await importarIcs(texto, 'trabajo.ics', AHORA);
+
+    const [nodo] = await db.nodes.toArray();
+    const horario = nodo.schedule as NonNullable<typeof nodo.schedule>;
+    expect(new Date(horario.end).getTime()).toBeGreaterThan(new Date(horario.start).getTime());
+    await expect(nodesRepo.update(nodo.id, { schedule: horario })).resolves.toBeUndefined();
+  });
+});
+
 describe('eventos importados descartados o desaparecidos', () => {
   afterEach(() => {
     vi.useRealTimers();

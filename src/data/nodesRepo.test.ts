@@ -269,6 +269,33 @@ describe('nodesRepo.syncExternal y removeSource con alcance', () => {
     expect(await db.nodes.count()).toBe(1);
   });
 
+  it('no guarda un evento cuyo horario no termina después de empezar', async () => {
+    const alReves = { start: HORARIO.end, end: HORARIO.start, allDay: false };
+    const instante = { start: HORARIO.start, end: HORARIO.start, allDay: false };
+
+    const resultado = await nodesRepo.syncExternal(
+      'ics',
+      [{ ...evento('a:1'), schedule: alReves }, { ...evento('a:2'), schedule: instante }, evento('a:3')],
+      VENTANA,
+    );
+
+    expect(resultado.creados).toBe(1);
+    const nodos = await db.nodes.toArray();
+    expect(nodos.map((nodo) => nodo.externalId)).toEqual(['a:3']);
+  });
+
+  it('no pisa un evento conocido con un horario inválido', async () => {
+    await nodesRepo.syncExternal('ics', [evento('a:1')], VENTANA);
+    const alReves = { start: HORARIO.end, end: HORARIO.start, allDay: false };
+
+    const resultado = await nodesRepo.syncExternal('ics', [{ ...evento('a:1'), schedule: alReves }], VENTANA);
+
+    expect(resultado).toEqual({ creados: 0, actualizados: 0, eliminados: 0 });
+    const [nodo] = await db.nodes.toArray();
+    expect(nodo.schedule).toEqual(HORARIO);
+    expect(nodo.deletedAt).toBeNull();
+  });
+
   it('removeSource solo quita los nodos del alcance', async () => {
     await nodesRepo.syncExternal('ics', [evento('a:1'), evento('b:1')], VENTANA);
 

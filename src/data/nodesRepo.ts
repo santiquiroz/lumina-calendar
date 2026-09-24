@@ -62,10 +62,18 @@ export function normalizarTexto(texto: string): string {
     .toLowerCase();
 }
 
+function terminaDespuesDeEmpezar(schedule: Schedule): boolean {
+  return new Date(schedule.end).getTime() > new Date(schedule.start).getTime();
+}
+
 function validarHorario(schedule: Schedule): void {
-  if (new Date(schedule.end).getTime() <= new Date(schedule.start).getTime()) {
+  if (!terminaDespuesDeEmpezar(schedule)) {
     throw new DomainError('INVALID_SCHEDULE', 'El evento debe terminar después de empezar');
   }
+}
+
+function sincronizable(evento: ExternalEvent, ocultos: Set<string>): boolean {
+  return !ocultos.has(evento.externalId) && terminaDespuesDeEmpezar(evento.schedule);
 }
 
 function claveDeOrden(
@@ -308,7 +316,8 @@ export const nodesRepo = {
   // y horario de lo conocido (sin tocar subtareas ni completados que agregó la
   // persona) y borra lo que desapareció, pero solo dentro de la ventana y del
   // alcance que se sincronizaron, para no arrastrar eventos que ni se consultaron.
-  // Lo que la persona descartó no vuelve.
+  // Lo que la persona descartó no vuelve, y un horario que no termina después de
+  // empezar se ignora.
   async syncExternal(
     source: Exclude<NodeSource, 'lumina'>,
     eventos: ExternalEvent[],
@@ -326,7 +335,7 @@ export const nodesRepo = {
     let creados = 0;
     let actualizados = 0;
 
-    for (const evento of eventos.filter((e) => !ocultos.has(e.externalId))) {
+    for (const evento of eventos.filter((e) => sincronizable(e, ocultos))) {
       const previo = porId.get(evento.externalId);
 
       if (!previo) {

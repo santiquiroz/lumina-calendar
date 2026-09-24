@@ -198,18 +198,26 @@ function firstValue(propiedades: ContentLine[], nombre: string): string {
 }
 
 function resolveEnd(propiedades: ContentLine[], inicio: IcsMoment): number {
+  const fin = declaredEnd(propiedades, inicio);
+  if (fin === null) return defaultEnd(inicio);
+  return fin > inicio.ms ? fin : minimumEnd(inicio);
+}
+
+function declaredEnd(propiedades: ContentLine[], inicio: IcsMoment): number | null {
   const finLinea = firstLine(propiedades, 'DTEND');
   const fin = finLinea === null ? null : parseMoment(finLinea);
   if (fin !== null) return fin.ms;
 
   const duracion = parseDuration(firstValue(propiedades, 'DURATION'));
-  if (duracion !== null) return inicio.ms + duracion;
-
-  return defaultEnd(inicio);
+  return duracion === null ? null : inicio.ms + duracion;
 }
 
 function defaultEnd(inicio: IcsMoment): number {
   return inicio.dateOnly ? nextLocalDayMs(inicio.ms) : inicio.ms + MS_HORA;
+}
+
+function minimumEnd(inicio: IcsMoment): number {
+  return inicio.dateOnly ? nextLocalDayMs(inicio.ms) : inicio.ms + MS_MINUTO;
 }
 
 // Sumar 24 h no siempre cae en el día siguiente: los cambios de horario de verano
