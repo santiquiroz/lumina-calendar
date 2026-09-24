@@ -1,13 +1,25 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   BACKUP_SCHEMA_VERSION,
+  BackupError,
   backupFileName,
   exportBackup,
   importBackup,
   parseBackup,
 } from './backup';
+import {
+  agregarSuscripcion,
+  CLAVE_CALENDARIOS_DISPOSITIVO,
+  CLAVE_SUSCRIPCIONES,
+  CLAVE_ULTIMA_SINCRONIZACION,
+  importarIcs,
+  listarSuscripciones,
+} from './calendarsRepo';
 import { db } from './db';
-import { nodesRepo } from './nodesRepo';
+import { CLAVE_EVENTOS_OCULTOS, nodesRepo } from './nodesRepo';
+import { CLAVE_AVISOS } from './notificationsRepo';
+import { CLAVE_TEMA, settingsRepo } from './settingsRepo';
+import { CLAVE_VERSION_DESCARTADA } from './updateRepo';
 
 const VACIO = {
   schemaVersion: 1,
@@ -16,10 +28,36 @@ const VACIO = {
   activities: [],
 };
 
-beforeEach(async () => {
+const V2_SIN_SETTINGS = { ...VACIO, schemaVersion: 2 };
+
+const AHORA = new Date('2026-08-12T12:00:00.000Z');
+
+const UN_EVENTO_ICS = [
+  'BEGIN:VCALENDAR',
+  'BEGIN:VEVENT',
+  'UID:evento-1',
+  'SUMMARY:Reunión importada',
+  'DTSTART:20260813T150000Z',
+  'DTEND:20260813T160000Z',
+  'END:VEVENT',
+  'END:VCALENDAR',
+].join('\r\n');
+
+function v3ConAjustes(settings: Record<string, unknown>) {
+  return parseBackup({ ...VACIO, schemaVersion: 3, settings });
+}
+
+async function exportarComoArchivo() {
+  return parseBackup(JSON.parse(JSON.stringify(await exportBackup())));
+}
+
+async function limpiarTodo(): Promise<void> {
   await db.nodes.clear();
   await db.activities.clear();
-});
+  await db.settings.clear();
+}
+
+beforeEach(limpiarTodo);
 
 describe('exportBackup', () => {
   it('incluye la versión de esquema y todos los nodos', async () => {
@@ -28,6 +66,16 @@ describe('exportBackup', () => {
     expect(respaldo.schemaVersion).toBe(BACKUP_SCHEMA_VERSION);
     expect(respaldo.nodes).toHaveLength(1);
     expect(respaldo.activities).toHaveLength(1);
+  });
+
+  it('incluye solo los ajustes de la lista blanca', async () => {
+    await settingsRepo.set(CLAVE_TEMA, 'dark');
+    await settingsRepo.set(CLAVE_ULTIMA_SINCRONIZACION, 123);
+    await settingsRepo.set(CLAVE_VERSION_DESCARTADA, '9.9.9');
+
+    const respaldo = await exportBackup();
+
+    expect(respaldo.settings).toEqual({ [CLAVE_TEMA]: 'dark' });
   });
 });
 
@@ -46,6 +94,23 @@ describe('parseBackup', () => {
 
   it('rechaza nodos con forma inválida', () => {
     expect(() => parseBackup({ ...VACIO, nodes: [{ id: 'x' }] })).toThrow(/formato/i);
+  });
+
+  it('rechaza la versión de esquema 4 con BackupError', () => {
+    expect(() => parseBackup({ ...VACIO, schemaVersion: 4 })).toThrow(BackupError);
+  });
+
+  it('acepta un respaldo v2 sin ajustes', () => {
+    expect(parseBackup(V2_SIN_SETTINGS).settings).toBeUndefined();
+  });
+
+  it('ignora las claves de ajustes fuera de la lista blanca', () => {
+    const respaldo = v3ConAjustes({ [CLAVE_TEMA]: 'dark', [CLAVE_VERSION_DESCARTADA]: '9.9.9' });
+    expect(respaldo.settings).toEqual({ [CLAVE_TEMA]: 'dark' });
+  });
+
+  it('rechaza un ajuste de la lista blanca con un valor inválido', () => {
+    expect(() => v3ConAjustes({ [CLAVE_TEMA]: 'violeta' })).toThrow(BackupError);
   });
 });
 
@@ -79,6 +144,102 @@ describe('importBackup', () => {
 
     expect(await db.nodes.count()).toBe(2);
     expect((await db.nodes.get(existente.id))?.text).toBe('Existente');
+  });
+});
+
+describe('importBackup con ajustes', () => {
+  it('en modo replace restaura suscripciones, calendarios elegidos, tema y avisos', async () => {
+    const suscripcion = await agregarSuscripcion('Feriados', 'webcal://ejemplo.com/feriados.ics');
+    await settingsRepo.set(CLAVE_CALENDARIOS_DISPOSITIVO, ['cal-1']);
+    await settingsRepo.set(CLAVE_TEMA, 'dark');
+    await settingsRepo.set(CLAVE_AVISOS, false);
+    const respaldo = await exportarComoArchivo();
+
+    await limpiarTodo();
+    await importBackup(respaldo, 'replace');
+
+    expect(await listarSuscripciones()).toEqual([suscripcion]);
+    expect(await settingsRepo.get(CLAVE_CALENDARIOS_DISPOSITIVO, [])).toEqual(['cal-1']);
+    expect(await settingsRepo.get(CLAVE_TEMA, 'system')).toBe('dark');
+    expect(await settingsRepo.get(CLAVE_AVISOS, true)).toBe(false);
+  });
+
+  it('en modo replace quita los ajustes de la lista blanca que el respaldo no trae', async () => {
+    await agregarSuscripcion('Vieja', 'https://ejemplo.com/vieja.ics');
+    await settingsRepo.set(CLAVE_ULTIMA_SINCRONIZACION, 123);
+
+    await importBackup(v3ConAjustes({}), 'replace');
+
+    expect(await listarSuscripciones()).toEqual([]);
+    expect(await settingsRepo.get(CLAVE_ULTIMA_SINCRONIZACION, 0)).toBe(123);
+  });
+
+  it('un respaldo v2 sin ajustes importa y no toca los ajustes actuales', async () => {
+    const suscripcion = await agregarSuscripcion('Feriados', 'https://ejemplo.com/feriados.ics');
+    await settingsRepo.set(CLAVE_TEMA, 'dark');
+    await nodesRepo.create({ text: 'Vieja' });
+
+    await importBackup(parseBackup(V2_SIN_SETTINGS), 'replace');
+
+    expect(await db.nodes.count()).toBe(0);
+    expect(await listarSuscripciones()).toEqual([suscripcion]);
+    expect(await settingsRepo.get(CLAVE_TEMA, 'system')).toBe('dark');
+  });
+
+  it('no guarda las claves fuera de la lista blanca', async () => {
+    const respaldo = v3ConAjustes({ [CLAVE_TEMA]: 'dark', [CLAVE_VERSION_DESCARTADA]: '9.9.9' });
+
+    await importBackup(respaldo, 'replace');
+
+    expect(await db.settings.get(CLAVE_VERSION_DESCARTADA)).toBeUndefined();
+    expect(await settingsRepo.get(CLAVE_TEMA, 'system')).toBe('dark');
+  });
+
+  it('en modo merge une las listas y toma del respaldo los valores sueltos', async () => {
+    const propia = await agregarSuscripcion('Propia', 'https://ejemplo.com/propia.ics');
+    await settingsRepo.set(CLAVE_CALENDARIOS_DISPOSITIVO, ['cal-1', 'cal-2']);
+    await settingsRepo.set(CLAVE_TEMA, 'light');
+    await settingsRepo.set(CLAVE_AVISOS, false);
+    const ajena = { id: 'sub-ajena', nombre: 'Ajena', url: 'https://ejemplo.com/ajena.ics' };
+    const respaldo = v3ConAjustes({
+      [CLAVE_SUSCRIPCIONES]: [ajena],
+      [CLAVE_CALENDARIOS_DISPOSITIVO]: ['cal-2', 'cal-3'],
+      [CLAVE_TEMA]: 'dark',
+    });
+
+    await importBackup(respaldo, 'merge');
+
+    expect(await listarSuscripciones()).toEqual([propia, ajena]);
+    expect(await settingsRepo.get(CLAVE_CALENDARIOS_DISPOSITIVO, [])).toEqual([
+      'cal-1',
+      'cal-2',
+      'cal-3',
+    ]);
+    expect(await settingsRepo.get(CLAVE_TEMA, 'system')).toBe('dark');
+    expect(await settingsRepo.get(CLAVE_AVISOS, true)).toBe(false);
+  });
+
+  it('en modo merge reemplaza por id la suscripción que ya existía', async () => {
+    const propia = await agregarSuscripcion('Nombre viejo', 'https://ejemplo.com/propia.ics');
+    const renombrada = { ...propia, nombre: 'Nombre nuevo' };
+
+    await importBackup(v3ConAjustes({ [CLAVE_SUSCRIPCIONES]: [renombrada] }), 'merge');
+
+    expect(await listarSuscripciones()).toEqual([renombrada]);
+  });
+
+  it('un evento descartado no vuelve tras restaurar el respaldo y reimportar', async () => {
+    await importarIcs(UN_EVENTO_ICS, 'trabajo.ics', AHORA);
+    const [evento] = await db.nodes.toArray();
+    await nodesRepo.softDelete(evento.id);
+    const respaldo = await exportarComoArchivo();
+
+    await limpiarTodo();
+    await importBackup(respaldo, 'replace');
+    await importarIcs(UN_EVENTO_ICS, 'trabajo.ics', AHORA);
+
+    expect(await settingsRepo.get(CLAVE_EVENTOS_OCULTOS, [])).toEqual([evento.externalId]);
+    expect((await db.nodes.get(evento.id))?.deletedAt).not.toBeNull();
   });
 });
 

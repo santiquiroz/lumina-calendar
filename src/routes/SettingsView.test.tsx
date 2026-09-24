@@ -87,6 +87,28 @@ describe('SettingsView', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(/se restauraron 1 elementos/i);
   });
 
+  it('aplica el tema que trae el respaldo restaurado', async () => {
+    const usuario = userEvent.setup();
+    document.documentElement.classList.remove('dark');
+    const respaldo = {
+      schemaVersion: 3,
+      exportedAt: new Date().toISOString(),
+      nodes: [],
+      activities: [],
+      settings: { [CLAVE_TEMA]: 'dark' },
+    };
+    renderConRuta(<SettingsView />);
+
+    const archivo = new File([JSON.stringify(respaldo)], 'respaldo.json', {
+      type: 'application/json',
+    });
+    await usuario.upload(screen.getByLabelText('Archivo de respaldo'), archivo);
+
+    const oscuro = await screen.findByRole('button', { name: 'Oscuro', pressed: true });
+    expect(oscuro).toBeInTheDocument();
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
+
   it('muestra el aviso de atribución exigido por la licencia', async () => {
     renderConRuta(<SettingsView />);
     expect(await screen.findByText(/diego luis álvarez garcía/i)).toBeInTheDocument();

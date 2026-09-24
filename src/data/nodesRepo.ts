@@ -48,7 +48,7 @@ export type AlcanceExterno = (nodo: LuminaNode) => boolean;
 const todoElOrigen: AlcanceExterno = () => true;
 
 // externalId de los eventos que la persona descartó: la sincronización no los revive.
-const CLAVE_EVENTOS_OCULTOS = 'calendarios.ocultos';
+export const CLAVE_EVENTOS_OCULTOS = 'calendarios.ocultos';
 
 export interface MovePosition {
   beforeId?: NodeId | null;

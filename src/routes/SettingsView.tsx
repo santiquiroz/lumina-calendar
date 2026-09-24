@@ -49,6 +49,12 @@ export function SettingsView() {
     await settingsRepo.set(CLAVE_TEMA, valor);
   }
 
+  async function aplicarTemaGuardado(): Promise<void> {
+    const guardado = await settingsRepo.get<ThemePreference>(CLAVE_TEMA, 'system');
+    setTema(guardado);
+    applyTheme(guardado);
+  }
+
   async function exportar(): Promise<void> {
     const respaldo = await exportBackup();
     const blob = new Blob([JSON.stringify(respaldo, null, 2)], { type: 'application/json' });
@@ -68,6 +74,7 @@ export function SettingsView() {
       const contenido = JSON.parse(await entrada.text()) as unknown;
       const respaldo = parseBackup(contenido);
       const resultado = await importBackup(respaldo, modo);
+      await aplicarTemaGuardado();
       setMensaje(`Se restauraron ${resultado.nodos} elementos.`);
     } catch (fallo) {
       setError(
