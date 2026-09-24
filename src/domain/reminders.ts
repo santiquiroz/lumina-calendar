@@ -16,7 +16,8 @@ export const REMINDER_WINDOW_DAYS = 30;
 
 // Android limita las alarmas pendientes por app (Samsung ronda las 500), así que
 // solo se programan los avisos más próximos; el resto entra en la siguiente sincronización.
-export const MAX_REMINDERS = 64;
+// Con dos avisos por evento, 200 cubre unos 100 eventos sin acercarse a ese cupo.
+export const MAX_REMINDERS = 200;
 
 // Los identificadores de notificación en Android son enteros de 32 bits, así que
 // el id del nodo (un UUID) se reduce a un hash estable y determinista: el mismo
