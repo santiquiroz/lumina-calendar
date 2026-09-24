@@ -29,6 +29,7 @@ vi.mock('@capacitor/core', () => ({
 }));
 
 const { db } = await import('./db');
+const { toCalendarDay } = await import('../domain/calendarDay');
 const { nodesRepo } = await import('./nodesRepo');
 const {
   elegirCalendarios,
@@ -121,6 +122,46 @@ describe('sincronizarCalendariosDelDispositivo', () => {
     await sincronizarCalendariosDelDispositivo(AHORA);
 
     expect((await db.nodes.toArray())[0].text).toBe('(sin título)');
+  });
+
+  it('un evento de todo el día queda en su día local y no en medianoche UTC', async () => {
+    await elegirCalendarios(['1']);
+    sistema.eventos = [
+      {
+        id: 'cumple',
+        calendarId: '1',
+        title: 'Cumpleaños',
+        startMs: Date.UTC(2026, 8, 14),
+        endMs: Date.UTC(2026, 8, 15),
+        allDay: true,
+      },
+    ];
+    await sincronizarCalendariosDelDispositivo(new Date('2026-09-10T12:00:00.000Z'));
+
+    const { schedule } = (await db.nodes.toArray())[0];
+    expect(toCalendarDay(schedule!.start)).toBe('2026-09-14');
+    expect(schedule!.start).toBe(new Date(2026, 8, 14).toISOString());
+    expect(schedule!.end).toBe(new Date(2026, 8, 15).toISOString());
+    expect(schedule!.allDay).toBe(true);
+  });
+
+  it('un evento de todo el día sin fin válido dura un día local', async () => {
+    await elegirCalendarios(['1']);
+    sistema.eventos = [
+      {
+        id: 'feriado',
+        calendarId: '1',
+        title: 'Festivo',
+        startMs: Date.UTC(2026, 8, 14),
+        endMs: Date.UTC(2026, 8, 14),
+        allDay: true,
+      },
+    ];
+    await sincronizarCalendariosDelDispositivo(new Date('2026-09-10T12:00:00.000Z'));
+
+    const { schedule } = (await db.nodes.toArray())[0];
+    expect(schedule!.start).toBe(new Date(2026, 8, 14).toISOString());
+    expect(schedule!.end).toBe(new Date(2026, 8, 15).toISOString());
   });
 
   it('sin permiso no importa nada', async () => {

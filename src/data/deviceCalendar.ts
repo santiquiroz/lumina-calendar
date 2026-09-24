@@ -1,4 +1,5 @@
 import { registerPlugin } from '@capacitor/core';
+import type { Schedule } from '@/domain/types';
 import { isNativePlatform } from './appVersion';
 import { nodesRepo, type ExternalEvent, type SyncResult } from './nodesRepo';
 import { settingsRepo } from './settingsRepo';
@@ -61,15 +62,36 @@ export async function elegirCalendarios(ids: string[]): Promise<void> {
   await settingsRepo.set(CLAVE_CALENDARIOS_DISPOSITIVO, ids);
 }
 
+const DURACION_MINIMA_MS = 60_000;
+const DIA_MS = 86_400_000;
+
+// CalendarContract guarda los eventos de todo el día en medianoche UTC.
+function medianocheLocalDeFechaUtc(ms: number): Date {
+  const fechaUtc = new Date(ms);
+  return new Date(fechaUtc.getUTCFullYear(), fechaUtc.getUTCMonth(), fechaUtc.getUTCDate());
+}
+
+function horarioDeTodoElDia(evento: DeviceEvent): Schedule {
+  return {
+    start: medianocheLocalDeFechaUtc(evento.startMs).toISOString(),
+    end: medianocheLocalDeFechaUtc(Math.max(evento.endMs, evento.startMs + DIA_MS)).toISOString(),
+    allDay: true,
+  };
+}
+
+function horarioConHora(evento: DeviceEvent): Schedule {
+  return {
+    start: new Date(evento.startMs).toISOString(),
+    end: new Date(Math.max(evento.endMs, evento.startMs + DURACION_MINIMA_MS)).toISOString(),
+    allDay: false,
+  };
+}
+
 function aEventoExterno(evento: DeviceEvent, nombrePorId: Map<string, string>): ExternalEvent {
   return {
     externalId: `dispositivo:${evento.id}`,
     text: evento.title || '(sin título)',
-    schedule: {
-      start: new Date(evento.startMs).toISOString(),
-      end: new Date(Math.max(evento.endMs, evento.startMs + 60_000)).toISOString(),
-      allDay: evento.allDay,
-    },
+    schedule: evento.allDay ? horarioDeTodoElDia(evento) : horarioConHora(evento),
     calendar: nombrePorId.get(evento.calendarId) ?? 'Calendario del teléfono',
   };
 }
