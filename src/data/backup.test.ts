@@ -148,9 +148,8 @@ describe('importBackup', () => {
 });
 
 describe('importBackup con ajustes', () => {
-  it('en modo replace restaura suscripciones, calendarios elegidos, tema y avisos', async () => {
+  it('en modo replace restaura suscripciones, tema y avisos', async () => {
     const suscripcion = await agregarSuscripcion('Feriados', 'webcal://ejemplo.com/feriados.ics');
-    await settingsRepo.set(CLAVE_CALENDARIOS_DISPOSITIVO, ['cal-1']);
     await settingsRepo.set(CLAVE_TEMA, 'dark');
     await settingsRepo.set(CLAVE_AVISOS, false);
     const respaldo = await exportarComoArchivo();
@@ -159,7 +158,6 @@ describe('importBackup con ajustes', () => {
     await importBackup(respaldo, 'replace');
 
     expect(await listarSuscripciones()).toEqual([suscripcion]);
-    expect(await settingsRepo.get(CLAVE_CALENDARIOS_DISPOSITIVO, [])).toEqual(['cal-1']);
     expect(await settingsRepo.get(CLAVE_TEMA, 'system')).toBe('dark');
     expect(await settingsRepo.get(CLAVE_AVISOS, true)).toBe(false);
   });
@@ -197,27 +195,40 @@ describe('importBackup con ajustes', () => {
 
   it('en modo merge une las listas y toma del respaldo los valores sueltos', async () => {
     const propia = await agregarSuscripcion('Propia', 'https://ejemplo.com/propia.ics');
-    await settingsRepo.set(CLAVE_CALENDARIOS_DISPOSITIVO, ['cal-1', 'cal-2']);
     await settingsRepo.set(CLAVE_TEMA, 'light');
     await settingsRepo.set(CLAVE_AVISOS, false);
     const ajena = { id: 'sub-ajena', nombre: 'Ajena', url: 'https://ejemplo.com/ajena.ics' };
     const respaldo = v3ConAjustes({
       [CLAVE_SUSCRIPCIONES]: [ajena],
-      [CLAVE_CALENDARIOS_DISPOSITIVO]: ['cal-2', 'cal-3'],
       [CLAVE_TEMA]: 'dark',
     });
 
     await importBackup(respaldo, 'merge');
 
     expect(await listarSuscripciones()).toEqual([propia, ajena]);
-    expect(await settingsRepo.get(CLAVE_CALENDARIOS_DISPOSITIVO, [])).toEqual([
-      'cal-1',
-      'cal-2',
-      'cal-3',
-    ]);
     expect(await settingsRepo.get(CLAVE_TEMA, 'system')).toBe('dark');
     expect(await settingsRepo.get(CLAVE_AVISOS, true)).toBe(false);
   });
+
+  it('no exporta los calendarios del teléfono: sus ids son locales de cada dispositivo', async () => {
+    await settingsRepo.set(CLAVE_CALENDARIOS_DISPOSITIVO, ['3']);
+
+    const respaldo = await exportarComoArchivo();
+
+    expect(respaldo.settings).not.toHaveProperty(CLAVE_CALENDARIOS_DISPOSITIVO);
+  });
+
+  it.each(['replace', 'merge'] as const)(
+    'en modo %s ignora los calendarios del teléfono que trae el respaldo y conserva los propios',
+    async (modo) => {
+      await settingsRepo.set(CLAVE_CALENDARIOS_DISPOSITIVO, ['3']);
+      const deOtroTelefono = v3ConAjustes({ [CLAVE_CALENDARIOS_DISPOSITIVO]: ['1', '7'] });
+
+      await importBackup(deOtroTelefono, modo);
+
+      expect(await settingsRepo.get(CLAVE_CALENDARIOS_DISPOSITIVO, [])).toEqual(['3']);
+    },
+  );
 
   it('en modo merge reemplaza por id la suscripción que ya existía', async () => {
     const propia = await agregarSuscripcion('Nombre viejo', 'https://ejemplo.com/propia.ics');

@@ -136,8 +136,9 @@ mandarlos. Eso tiene una contrapartida honesta: **si perdés el dispositivo,
 perdés los datos**. Ajustes tiene un botón de exportar respaldo en JSON y otro
 para volver a importarlo; el formato está versionado y validado desde la v1.
 Además de tus elementos, el respaldo lleva tus suscripciones a calendarios, los
-calendarios del teléfono que elegiste, los eventos importados que descartaste,
-el tema y si los avisos están prendidos.
+eventos importados que descartaste, el tema y si los avisos están prendidos. Los
+calendarios del teléfono no viajan: cada teléfono los numera a su manera, así que
+en el nuevo los elegís otra vez desde Ajustes.
 
 También podés pedirle al navegador que marque el almacenamiento como permanente
 para que no lo purgue cuando necesite espacio.

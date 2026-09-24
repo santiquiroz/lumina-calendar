@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Activity, LuminaNode } from '@/domain/types';
-import { CLAVE_CALENDARIOS_DISPOSITIVO, CLAVE_SUSCRIPCIONES } from './calendarsRepo';
+import { CLAVE_SUSCRIPCIONES } from './calendarsRepo';
 import { db, type SettingRecord } from './db';
 import { CLAVE_EVENTOS_OCULTOS } from './nodesRepo';
 import { CLAVE_AVISOS } from './notificationsRepo';
@@ -63,11 +63,11 @@ const suscripcionSchema = z.object({
 });
 
 // Lista blanca: lo que es de la persona viaja en el respaldo; lo propio del
-// dispositivo (última sincronización, chequeo de versión) no. zod descarta
+// dispositivo (última sincronización, chequeo de versión, calendarios del
+// teléfono, cuyos ids son filas locales de su proveedor) no. zod descarta
 // cualquier otra clave.
 const settingsSchema = z.object({
   [CLAVE_SUSCRIPCIONES]: z.array(suscripcionSchema).optional(),
-  [CLAVE_CALENDARIOS_DISPOSITIVO]: z.array(z.string()).optional(),
   [CLAVE_EVENTOS_OCULTOS]: z.array(z.string()).optional(),
   [CLAVE_TEMA]: z.enum(['light', 'dark', 'system']).optional(),
   [CLAVE_AVISOS]: z.boolean().optional(),
@@ -154,10 +154,6 @@ function fusionarSettings(actuales: BackupSettings, respaldo: BackupSettings): B
     [CLAVE_SUSCRIPCIONES]: unirPorId(
       actuales[CLAVE_SUSCRIPCIONES],
       respaldo[CLAVE_SUSCRIPCIONES],
-    ),
-    [CLAVE_CALENDARIOS_DISPOSITIVO]: unirSinRepetir(
-      actuales[CLAVE_CALENDARIOS_DISPOSITIVO],
-      respaldo[CLAVE_CALENDARIOS_DISPOSITIVO],
     ),
     [CLAVE_EVENTOS_OCULTOS]: unirSinRepetir(
       actuales[CLAVE_EVENTOS_OCULTOS],
