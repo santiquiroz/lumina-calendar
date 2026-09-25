@@ -12,6 +12,7 @@ export async function limpiarBase(): Promise<void> {
   useUiStore.setState({
     capturaAbierta: false,
     nodoParaProgramar: null,
+    descarte: null,
     diaSeleccionado: toCalendarDay(new Date()),
   });
 }

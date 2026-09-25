@@ -5,6 +5,7 @@ import { db } from '@/data/db';
 import { nodesRepo } from '@/data/nodesRepo';
 import { useUiStore } from '@/store/uiStore';
 import { limpiarBase, renderConRuta } from '@/test/render';
+import { UndoToast } from '@/ui/UndoToast';
 import { CanvasView } from './CanvasView';
 
 beforeEach(limpiarBase);
@@ -53,6 +54,27 @@ describe('CanvasView', () => {
     await usuario.click(await screen.findByRole('button', { name: 'Descartar' }));
 
     await waitFor(async () => expect((await db.nodes.get(idea.id))?.deletedAt).not.toBeNull());
+  });
+
+  it('permite deshacer el descarte de una idea', async () => {
+    const usuario = userEvent.setup();
+    const idea = await nodesRepo.create({ text: 'Mejor la guardo' });
+
+    renderConRuta(
+      <>
+        <CanvasView />
+        <UndoToast />
+      </>,
+    );
+
+    await usuario.click(await screen.findByRole('button', { name: 'Descartar' }));
+    await waitFor(() => expect(screen.queryByText('Mejor la guardo')).not.toBeInTheDocument());
+    expect(screen.getByText('Idea descartada')).toBeInTheDocument();
+
+    await usuario.click(screen.getByRole('button', { name: 'Deshacer' }));
+
+    await waitFor(async () => expect((await db.nodes.get(idea.id))?.deletedAt).toBeNull());
+    expect(await screen.findByText('Mejor la guardo')).toBeInTheDocument();
   });
 
   it('abre la captura desde el encabezado', async () => {

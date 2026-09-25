@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { nodesRepo } from '@/data/nodesRepo';
 import { formatDayLong, formatHour, toCalendarDay } from '@/domain/calendarDay';
 import { isSubtreeComplete } from '@/domain/progress';
+import { useDescartar } from '@/hooks/useDiscard';
 import { useNode, useProgress, useTreeIndex } from '@/hooks/useNodes';
 import { useNow } from '@/hooks/useNow';
 import { useUiStore } from '@/store/uiStore';
@@ -22,6 +22,7 @@ export function NodeDetail() {
   const progreso = useProgress(id);
   const ahora = useNow();
   const abrirProgramacion = useUiStore((estado) => estado.abrirProgramacion);
+  const descartar = useDescartar();
   const [celebrando, setCelebrando] = useState(false);
   const [celebrado, setCelebrado] = useState(false);
 
@@ -59,7 +60,7 @@ export function NodeDetail() {
           <IconButton
             label="Descartar carpeta"
             onClick={() => {
-              void nodesRepo.softDelete(nodo.id).then(() => navegar('/'));
+              void descartar(nodo.id, 'Carpeta descartada').then(() => navegar('/'));
             }}
           >
             <IconTrash size={20} />

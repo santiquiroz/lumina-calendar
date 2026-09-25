@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { nodesRepo } from '@/data/nodesRepo';
+import { useDescartar } from '@/hooks/useDiscard';
 import { useIdeas } from '@/hooks/useNodes';
 import { useUiStore } from '@/store/uiStore';
 import { Button } from '@/ui/Button';
@@ -12,6 +12,7 @@ export function CanvasView() {
   const ideas = useIdeas();
   const abrirCaptura = useUiStore((estado) => estado.abrirCaptura);
   const abrirProgramacion = useUiStore((estado) => estado.abrirProgramacion);
+  const descartar = useDescartar();
 
   return (
     <section aria-labelledby="titulo-canvas" className="px-4 py-4">
@@ -64,7 +65,7 @@ export function CanvasView() {
                 <IconButton
                   label="Descartar"
                   onClick={() => {
-                    void nodesRepo.softDelete(idea.id);
+                    void descartar(idea.id, 'Idea descartada');
                   }}
                 >
                   <IconTrash size={20} />

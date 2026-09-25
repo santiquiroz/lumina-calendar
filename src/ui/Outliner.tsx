@@ -3,6 +3,7 @@ import { nodesRepo } from '@/data/nodesRepo';
 import { DomainError } from '@/domain/errors';
 import { MAX_DEPTH, type TreeIndex } from '@/domain/tree';
 import type { LuminaNode, NodeId } from '@/domain/types';
+import { useDescartar } from '@/hooks/useDiscard';
 import { OutlinerRow } from './OutlinerRow';
 
 export interface OutlinerProps {
@@ -34,6 +35,7 @@ export function filasVisibles(index: TreeIndex, rootId: NodeId): FilaVisible[] {
 export function Outliner({ rootId, index }: OutlinerProps) {
   const [enfocado, setEnfocado] = useState<NodeId | null>(null);
   const [aviso, setAviso] = useState('');
+  const descartar = useDescartar();
   const filas = filasVisibles(index, rootId);
 
   function anunciar(mensaje: string): void {
@@ -118,7 +120,7 @@ export function Outliner({ rootId, index }: OutlinerProps) {
     if (evento.key === 'Backspace' && (evento.currentTarget.textContent ?? '') === '') {
       evento.preventDefault();
       moverFoco(posicion, -1);
-      void nodesRepo.softDelete(fila.node.id);
+      void descartar(fila.node.id, 'Subtarea descartada');
     }
   }
 

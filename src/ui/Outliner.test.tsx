@@ -8,6 +8,7 @@ import { useAllNodes } from '@/hooks/useNodes';
 import { buildNode } from '@/test/factories';
 import { limpiarBase, renderConRuta } from '@/test/render';
 import { filasVisibles, Outliner } from './Outliner';
+import { UndoToast } from './UndoToast';
 
 beforeEach(limpiarBase);
 
@@ -139,5 +140,27 @@ describe('Outliner', () => {
     await usuario.keyboard('{Tab}');
 
     expect(await screen.findByRole('status')).toHaveTextContent(/límite de 20 niveles/i);
+  });
+
+  it('ofrece deshacer al descartar una subtarea vacía con Retroceso', async () => {
+    const usuario = userEvent.setup();
+    const raiz = await nodesRepo.create({ text: 'Carpeta' });
+    await nodesRepo.create({ text: 'Primera', parentId: raiz.id });
+    const vacia = await nodesRepo.create({ text: '', parentId: raiz.id });
+
+    renderConRuta(
+      <>
+        <OutlinerVivo rootId={raiz.id} />
+        <UndoToast />
+      </>,
+    );
+
+    const campo = await screen.findByLabelText('Texto de la tarea');
+    campo.focus();
+    await usuario.keyboard('{Backspace}');
+
+    await usuario.click(await screen.findByRole('button', { name: 'Deshacer' }));
+
+    await waitFor(async () => expect((await db.nodes.get(vacia.id))?.deletedAt).toBeNull());
   });
 });

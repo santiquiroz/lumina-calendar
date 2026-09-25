@@ -7,6 +7,7 @@ import { NewEventSheet } from '@/ui/NewEventSheet';
 import { QuickCapture } from '@/ui/QuickCapture';
 import { ScheduleSheet } from '@/ui/ScheduleSheet';
 import { Sidebar } from '@/ui/Sidebar';
+import { UndoToast } from '@/ui/UndoToast';
 import { UpdateBanner } from '@/ui/UpdateBanner';
 
 export function Layout() {
@@ -29,6 +30,7 @@ export function Layout() {
       <QuickCapture />
       <ScheduleSheet />
       <NewEventSheet />
+      <UndoToast />
     </div>
   );
 }
