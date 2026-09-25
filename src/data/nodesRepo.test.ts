@@ -432,6 +432,7 @@ describe('nodesRepo.syncExternal en lote', () => {
   const HORARIO = buildSchedule('2026-08-13T14:00:00.000Z', 60);
   // Umbral holgado: una relectura por evento tardaba ~12 s con 2000; en lote, ~150 ms.
   const UMBRAL_DOS_MIL_MS = 5000;
+  const LARGO_MAXIMO_DE_ORDEN = 4;
 
   function evento(externalId: string, text = externalId) {
     return { externalId, text, schedule: HORARIO, calendar: null };
@@ -457,6 +458,15 @@ describe('nodesRepo.syncExternal en lote', () => {
     const raices = (await db.nodes.toArray()).sort((a, b) => (a.order < b.order ? -1 : 1));
     expect(new Set(raices.map((nodo) => nodo.order)).size).toBe(2001);
     expect(raices.map((nodo) => nodo.text)).toEqual(['Idea propia', ...eventos(2000).map((e) => e.text)]);
+  }, 60_000);
+
+  it('las claves de orden de un lote grande se mantienen cortas', async () => {
+    await nodesRepo.create({ text: 'Idea propia' });
+
+    await nodesRepo.syncExternal('ics', eventos(2000), VENTANA);
+
+    const largos = (await db.nodes.toArray()).map((nodo) => nodo.order.length);
+    expect(Math.max(...largos)).toBeLessThanOrEqual(LARGO_MAXIMO_DE_ORDEN);
   }, 60_000);
 
   it('si falla la escritura de los nuevos no deja nada a medias', async () => {

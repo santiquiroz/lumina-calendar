@@ -1,6 +1,6 @@
 import { dayBounds, type CalendarDay } from '@/domain/calendarDay';
 import { DomainError } from '@/domain/errors';
-import { orderBetween } from '@/domain/order';
+import { orderBetween, ordersBetween } from '@/domain/order';
 import { cambiaElInicio, desplazarHorario } from '@/domain/reschedule';
 import {
   assertMoveAllowed,
@@ -221,10 +221,9 @@ function nodosNuevos(
   eventos: ExternalEvent[],
   ultimoOrden: string | null,
 ): LuminaNode[] {
-  let orden = ultimoOrden;
-  return eventos.map((evento) => {
-    orden = orderBetween(orden, null);
-    return nodoBase(
+  const ordenes = ordersBetween(ultimoOrden, null, eventos.length);
+  return eventos.map((evento, indice) =>
+    nodoBase(
       {
         text: evento.text,
         schedule: evento.schedule,
@@ -232,9 +231,9 @@ function nodosNuevos(
         externalId: evento.externalId,
         externalCalendar: evento.calendar,
       },
-      orden,
-    );
-  });
+      ordenes[indice],
+    ),
+  );
 }
 
 function estaEnLaVentana(nodo: LuminaNode, ventana: { desde: string; hasta: string }): boolean {

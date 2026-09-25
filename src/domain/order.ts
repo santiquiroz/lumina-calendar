@@ -53,3 +53,21 @@ export function orderBetween(before: string | null, after: string | null): strin
 
   return midpoint(lower, upper);
 }
+
+// Por bisección cada nivel alarga las claves como mucho un carácter; insertar
+// una tras otra al final lo hace cada pocas claves.
+export function ordersBetween(
+  before: string | null,
+  after: string | null,
+  cantidad: number,
+): string[] {
+  if (cantidad <= 0) return [];
+
+  const centro = orderBetween(before, after);
+  const antes = Math.floor((cantidad - 1) / 2);
+  return [
+    ...ordersBetween(before, centro, antes),
+    centro,
+    ...ordersBetween(centro, after, cantidad - 1 - antes),
+  ];
+}

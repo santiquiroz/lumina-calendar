@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { orderBetween } from './order';
+import { orderBetween, ordersBetween } from './order';
 
 describe('orderBetween', () => {
   it('genera una clave cuando no hay vecinos', () => {
@@ -50,5 +50,39 @@ describe('orderBetween', () => {
 
   it('rechaza caracteres fuera del alfabeto', () => {
     expect(() => orderBetween('ñ', null)).toThrow(RangeError);
+  });
+});
+
+describe('ordersBetween', () => {
+  function estaOrdenada(claves: string[]): boolean {
+    return claves.every((clave, indice) => indice === 0 || claves[indice - 1] < clave);
+  }
+
+  it('no genera claves cuando no se pide ninguna', () => {
+    expect(ordersBetween('V', null, 0)).toEqual([]);
+  });
+
+  it('reparte las claves crecientes estrictamente entre los dos límites', () => {
+    const claves = ordersBetween('A', 'B', 50);
+
+    expect(claves).toHaveLength(50);
+    expect(estaOrdenada(['A', ...claves, 'B'])).toBe(true);
+  });
+
+  it('agrega dos mil claves al final sin que ninguna pase de cuatro caracteres', () => {
+    const claves = ordersBetween('V', null, 2000);
+
+    expect(claves).toHaveLength(2000);
+    expect(estaOrdenada(['V', ...claves])).toBe(true);
+    expect(Math.max(...claves.map((clave) => clave.length))).toBeLessThanOrEqual(4);
+  });
+
+  it('deja espacio para insertar entre cualquier par de claves generadas', () => {
+    const claves = ordersBetween(null, null, 100);
+
+    for (let indice = 1; indice < claves.length; indice += 1) {
+      const nueva = orderBetween(claves[indice - 1], claves[indice]);
+      expect(claves[indice - 1] < nueva && nueva < claves[indice]).toBe(true);
+    }
   });
 });
