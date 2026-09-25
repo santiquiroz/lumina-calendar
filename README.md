@@ -21,7 +21,10 @@ Lumina toma tres decisiones a partir de eso:
    pedir fecha, categoría ni prioridad. Programarla es un segundo paso opcional.
 2. **Reprogramar no es fallar.** No existen etiquetas de urgencia, badges de
    vencimiento ni contadores en rojo. El aviso de que un bloque termina es un
-   cambio suave a ámbar, proporcional a la duración del bloque.
+   cambio suave a ámbar, proporcional a la duración del bloque. Reprogramar es
+   arrastrar el bloque en la vista Día (con el dedo, mantenelo presionado un
+   instante), de a 15 minutos y sin diálogo de confirmación; con el teclado, las
+   flechas arriba y abajo hacen lo mismo.
 3. **Una cosa a la vez.** El modo foco muestra una sola subtarea, el tiempo que
    queda y dos acciones. Nada más.
 
@@ -111,7 +114,7 @@ expandidos**, así que las repeticiones aparecen bien sin que Lumina tenga que
 interpretar reglas de recurrencia.
 
 Los eventos importados se marcan con un punto y se pueden desglosar en subtareas
-como cualquier otro. Al volver a sincronizar se actualiza su nombre y su horario,
+como cualquier otro, pero no se arrastran: su horario lo manda el origen. Al volver a sincronizar se actualiza su nombre y su horario,
 pero **tus subtareas se conservan**; si el evento desaparece del origen,
 desaparece de Lumina. Si la fuente no responde, no se borra nada: una caída de
 red no puede leerse como "ya no hay eventos".

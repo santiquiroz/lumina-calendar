@@ -108,6 +108,69 @@ describe('nodesRepo.schedule', () => {
   });
 });
 
+function localAlas(hora: number, minutos = 0): string {
+  return new Date(2026, 8, 15, hora, minutos).toISOString();
+}
+
+function horarioLocal(desde: [number, number], hasta: [number, number]) {
+  return { start: localAlas(...desde), end: localAlas(...hasta), allDay: false };
+}
+
+describe('nodesRepo.shiftSchedule', () => {
+  it('corre el horario guardado y conserva la duración', async () => {
+    const evento = await nodesRepo.create({
+      text: 'Lectura',
+      schedule: horarioLocal([10, 0], [11, 30]),
+    });
+    const programar = vi.spyOn(nodesRepo, 'schedule');
+
+    const nuevo = await nodesRepo.shiftSchedule(evento.id, 45);
+
+    expect(nuevo).toEqual(horarioLocal([10, 45], [12, 15]));
+    expect(programar).toHaveBeenCalledWith(evento.id, nuevo);
+    expect((await db.nodes.get(evento.id))?.schedule).toEqual(nuevo);
+    programar.mockRestore();
+  });
+
+  it('encadena los corrimientos que llegan seguidos sin perder ninguno', async () => {
+    const evento = await nodesRepo.create({
+      text: 'Lectura',
+      schedule: horarioLocal([10, 0], [11, 0]),
+    });
+
+    await Promise.all([
+      nodesRepo.shiftSchedule(evento.id, -15),
+      nodesRepo.shiftSchedule(evento.id, -15),
+      nodesRepo.shiftSchedule(evento.id, -15),
+    ]);
+
+    expect((await db.nodes.get(evento.id))?.schedule).toEqual(horarioLocal([9, 15], [10, 15]));
+  });
+
+  it('no escribe ni registra actividad cuando el borde del día lo deja igual', async () => {
+    const hastaMedianoche = {
+      start: localAlas(23),
+      end: new Date(2026, 8, 16).toISOString(),
+      allDay: false,
+    };
+    const evento = await nodesRepo.create({ text: 'Cierre', schedule: hastaMedianoche });
+    await db.activities.clear();
+
+    const nuevo = await nodesRepo.shiftSchedule(evento.id, 60);
+
+    expect(nuevo).toEqual(hastaMedianoche);
+    expect(await activityRepo.listAll()).toEqual([]);
+  });
+
+  it('rechaza un nodo sin horario', async () => {
+    const idea = await nodesRepo.create({ text: 'Idea suelta' });
+
+    await expect(nodesRepo.shiftSchedule(idea.id, 15)).rejects.toThrow(
+      expect.objectContaining({ code: 'NOT_FOUND' }),
+    );
+  });
+});
+
 describe('nodesRepo.move', () => {
   it('reasigna el padre y conserva un orden válido', async () => {
     const a = await nodesRepo.create({ text: 'A' });

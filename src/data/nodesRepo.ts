@@ -1,6 +1,7 @@
 import { dayBounds, type CalendarDay } from '@/domain/calendarDay';
 import { DomainError } from '@/domain/errors';
 import { orderBetween } from '@/domain/order';
+import { cambiaElInicio, desplazarHorario } from '@/domain/reschedule';
 import {
   assertMoveAllowed,
   deletedSubtreeOf,
@@ -368,6 +369,18 @@ export const nodesRepo = {
 
       await db.nodes.update(id, { schedule, updatedAt: ahoraIso() });
       if (schedule) await db.activities.add(crearActividad('schedule', id));
+    });
+  },
+
+  // Leer dentro de la transacción encadena flechas seguidas en vez de partir del mismo valor.
+  async shiftSchedule(id: NodeId, minutos: number): Promise<Schedule> {
+    return db.transaction('rw', db.nodes, db.activities, async () => {
+      const actual = (await db.nodes.get(id))?.schedule;
+      if (!actual) throw new DomainError('NOT_FOUND', `No existe un horario para ${id}`);
+
+      const nuevo = desplazarHorario(actual, minutos);
+      if (cambiaElInicio(actual, nuevo)) await nodesRepo.schedule(id, nuevo);
+      return nuevo;
     });
   },
 

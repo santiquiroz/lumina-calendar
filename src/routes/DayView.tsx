@@ -1,18 +1,46 @@
-import { useMemo } from 'react';
-import { addDays, formatDayLong, toCalendarDay } from '@/domain/calendarDay';
+import { useCallback, useMemo, useState } from 'react';
+import { addDays, formatDayLong, formatHour, toCalendarDay } from '@/domain/calendarDay';
 import { layoutDay } from '@/domain/dayLayout';
+import type { LuminaNode, Schedule } from '@/domain/types';
 import { useDayNodes, useTreeIndex } from '@/hooks/useNodes';
 import { useNow } from '@/hooks/useNow';
+import { useMoverBloque } from '@/hooks/useReschedule';
 import { useUiStore } from '@/store/uiStore';
 import { AllDayStrip } from '@/ui/AllDayStrip';
 import { Button } from '@/ui/Button';
 import { DayStrip } from '@/ui/DayStrip';
 import { EmptyState } from '@/ui/EmptyState';
-import { EventBlock } from '@/ui/EventBlock';
+import { AyudaMoverBloque, EventBlock } from '@/ui/EventBlock';
 import { IconButton } from '@/ui/IconButton';
 import { NowIndicator } from '@/ui/NowIndicator';
 import { DAY_GRID, TimelineGrid } from '@/ui/TimelineGrid';
 import { IconAdd, IconChevronDown, IconChevronRight, IconSparkles } from '@/ui/icons';
+
+function anuncioDeHorario(texto: string, horario: Schedule): string {
+  return `«${texto}» ahora va de ${formatHour(horario.start)} a ${formatHour(horario.end)}.`;
+}
+
+function esMovible(nodo: LuminaNode): boolean {
+  return nodo.source === 'lumina';
+}
+
+function useMoverConAnuncio() {
+  const moverBloque = useMoverBloque();
+  const [anuncio, setAnuncio] = useState('');
+
+  const mover = useCallback(
+    async (nodo: LuminaNode, minutos: number) => {
+      try {
+        setAnuncio(anuncioDeHorario(nodo.text, await moverBloque(nodo.id, minutos)));
+      } catch {
+        setAnuncio('No pudimos mover el bloque. Probá de nuevo.');
+      }
+    },
+    [moverBloque],
+  );
+
+  return { anuncio, mover };
+}
 
 export function DayView() {
   const dia = useUiStore((estado) => estado.diaSeleccionado);
@@ -23,6 +51,7 @@ export function DayView() {
   const index = useTreeIndex();
   const ahora = useNow();
   const esHoy = dia === toCalendarDay(ahora);
+  const { anuncio, mover } = useMoverConAnuncio();
 
   return (
     <section aria-labelledby="titulo-dia" className="flex flex-col">
@@ -80,13 +109,19 @@ export function DayView() {
                   position={posicion}
                   index={index}
                   now={ahora}
+                  onMover={esMovible(node) ? (minutos) => void mover(node, minutos) : undefined}
                 />
               ))}
               {esHoy ? <NowIndicator now={ahora} /> : null}
             </TimelineGrid>
           </div>
+          <AyudaMoverBloque />
         </>
       )}
+
+      <p role="status" aria-live="polite" className="sr-only">
+        {anuncio}
+      </p>
     </section>
   );
 }
