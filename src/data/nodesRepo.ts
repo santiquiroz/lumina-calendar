@@ -167,9 +167,152 @@ async function marcarBorrados(nodos: LuminaNode[], marca: string): Promise<void>
 
 // Un borrado arrastra a los descendientes con la misma marca (invariante 5), así
 // las subtareas no quedan huérfanas convertidas en ideas del Canvas.
-async function borrarSubarboles(raices: LuminaNode[], marca: string): Promise<void> {
-  const index = indexNodes(await db.nodes.toArray());
-  await marcarBorrados(raices.flatMap((raiz) => subarbolVivo(index, raiz.id)), marca);
+function subarbolesVivos(nodos: LuminaNode[], raices: LuminaNode[]): LuminaNode[] {
+  const index = indexNodes(nodos);
+  return raices.flatMap((raiz) => subarbolVivo(index, raiz.id));
+}
+
+// Estado en memoria de una sincronización: se calcula todo con una sola lectura
+// y se escribe al final en lote, dentro de una única transacción.
+type EstadoNodos = Map<NodeId, LuminaNode>;
+
+interface PlanDeSincronizacion {
+  cambiados: LuminaNode[];
+  nuevos: LuminaNode[];
+  resultado: SyncResult;
+}
+
+function aplicar(estado: EstadoNodos, nodos: LuminaNode[]): void {
+  for (const nodo of nodos) estado.set(nodo.id, nodo);
+}
+
+function cambioExterno(previo: LuminaNode, evento: ExternalEvent): boolean {
+  return (
+    previo.text !== evento.text ||
+    previo.schedule?.start !== evento.schedule.start ||
+    previo.schedule?.end !== evento.schedule.end ||
+    previo.deletedAt !== null
+  );
+}
+
+function revivirSubarbol(estado: EstadoNodos, id: NodeId): void {
+  const subarbol = deletedSubtreeOf([...estado.values()], id);
+  aplicar(estado, subarbol.map((nodo) => ({ ...nodo, deletedAt: null })));
+}
+
+function actualizarDesdeEvento(estado: EstadoNodos, id: NodeId, evento: ExternalEvent, ahora: string): void {
+  const previo = estado.get(id) as LuminaNode;
+  if (previo.deletedAt !== null) revivirSubarbol(estado, id);
+  aplicar(estado, [
+    {
+      ...(estado.get(id) as LuminaNode),
+      text: evento.text,
+      schedule: evento.schedule,
+      externalCalendar: evento.calendar,
+      deletedAt: null,
+      updatedAt: ahora,
+    },
+  ]);
+}
+
+function nodosNuevos(
+  source: Exclude<NodeSource, 'lumina'>,
+  eventos: ExternalEvent[],
+  ultimoOrden: string | null,
+): LuminaNode[] {
+  let orden = ultimoOrden;
+  return eventos.map((evento) => {
+    orden = orderBetween(orden, null);
+    return nodoBase(
+      {
+        text: evento.text,
+        schedule: evento.schedule,
+        source,
+        externalId: evento.externalId,
+        externalCalendar: evento.calendar,
+      },
+      orden,
+    );
+  });
+}
+
+function estaEnLaVentana(nodo: LuminaNode, ventana: { desde: string; hasta: string }): boolean {
+  return (
+    nodo.schedule !== null &&
+    nodo.schedule.start >= ventana.desde &&
+    nodo.schedule.start < ventana.hasta
+  );
+}
+
+function desaparecidosDe(
+  existentes: LuminaNode[],
+  eventos: ExternalEvent[],
+  ventana: { desde: string; hasta: string },
+  alcance: AlcanceExterno,
+): LuminaNode[] {
+  const vistos = new Set(eventos.map((evento) => evento.externalId));
+  return existentes.filter(
+    (nodo) =>
+      alcance(nodo) &&
+      nodo.deletedAt === null &&
+      !vistos.has(nodo.externalId as string) &&
+      estaEnLaVentana(nodo, ventana),
+  );
+}
+
+function borrarEnEstado(estado: EstadoNodos, raices: LuminaNode[], marca: string): void {
+  const subarboles = subarbolesVivos([...estado.values()], raices);
+  aplicar(estado, subarboles.map((nodo) => ({ ...nodo, deletedAt: marca, updatedAt: marca })));
+}
+
+interface LoteExterno {
+  source: Exclude<NodeSource, 'lumina'>;
+  eventos: ExternalEvent[];
+  ventana: { desde: string; hasta: string };
+  alcance: AlcanceExterno;
+}
+
+function cambiadosDesde(todos: LuminaNode[], estado: EstadoNodos): LuminaNode[] {
+  return todos
+    .map((original) => estado.get(original.id) as LuminaNode)
+    .filter((nodo, indice) => nodo !== todos[indice]);
+}
+
+function planearSincronizacion(
+  todos: LuminaNode[],
+  lote: LoteExterno,
+  ocultos: Set<string>,
+  ahora: string,
+): PlanDeSincronizacion {
+  const existentes = todos.filter((nodo) => nodo.source === lote.source && nodo.externalId !== null);
+  const porId = new Map(existentes.map((nodo) => [nodo.externalId as string, nodo]));
+  const estado: EstadoNodos = new Map(todos.map((nodo) => [nodo.id, nodo]));
+  const sincronizables = lote.eventos.filter((evento) => sincronizable(evento, ocultos));
+
+  const desconocidos = sincronizables.filter((evento) => !porId.has(evento.externalId));
+  const aActualizar = sincronizables.filter((evento) => {
+    const previo = porId.get(evento.externalId);
+    return previo !== undefined && cambioExterno(previo, evento);
+  });
+  for (const evento of aActualizar) {
+    actualizarDesdeEvento(estado, (porId.get(evento.externalId) as LuminaNode).id, evento, ahora);
+  }
+
+  const ultimoOrden = indexNodes([...estado.values()]).roots().at(-1)?.order ?? null;
+  const nuevos = nodosNuevos(lote.source, desconocidos, ultimoOrden);
+
+  const desaparecidos = desaparecidosDe(existentes, lote.eventos, lote.ventana, lote.alcance);
+  borrarEnEstado(estado, desaparecidos, ahora);
+
+  return {
+    cambiados: cambiadosDesde(todos, estado),
+    nuevos,
+    resultado: {
+      creados: nuevos.length,
+      actualizados: aActualizar.length,
+      eliminados: desaparecidos.length,
+    },
+  };
 }
 
 async function restaurarSubarbol(id: NodeId): Promise<LuminaNode[]> {
@@ -325,69 +468,15 @@ export const nodesRepo = {
     alcance: AlcanceExterno = todoElOrigen,
   ): Promise<SyncResult> {
     const ahora = ahoraIso();
-    const existentes = (await db.nodes.toArray()).filter(
-      (nodo) => nodo.source === source && nodo.externalId !== null,
-    );
-    const porId = new Map(existentes.map((nodo) => [nodo.externalId as string, nodo]));
-    const vistos = new Set(eventos.map((evento) => evento.externalId));
-    const ocultos = new Set(await listarOcultos());
+    return db.transaction('rw', db.nodes, db.settings, async () => {
+      const todos = await db.nodes.toArray();
+      const ocultos = new Set(await listarOcultos());
+      const plan = planearSincronizacion(todos, { source, eventos, ventana, alcance }, ocultos, ahora);
 
-    let creados = 0;
-    let actualizados = 0;
-
-    for (const evento of eventos.filter((e) => sincronizable(e, ocultos))) {
-      const previo = porId.get(evento.externalId);
-
-      if (!previo) {
-        const hermanos = indexNodes(await db.nodes.toArray()).childrenOf(null);
-        await db.nodes.add(
-          nodoBase(
-            {
-              text: evento.text,
-              schedule: evento.schedule,
-              source,
-              externalId: evento.externalId,
-              externalCalendar: evento.calendar,
-            },
-            claveDeOrden(hermanos, {}),
-          ),
-        );
-        creados += 1;
-        continue;
-      }
-
-      const cambio =
-        previo.text !== evento.text ||
-        previo.schedule?.start !== evento.schedule.start ||
-        previo.schedule?.end !== evento.schedule.end ||
-        previo.deletedAt !== null;
-
-      if (cambio) {
-        if (previo.deletedAt !== null) await restaurarSubarbol(previo.id);
-        await db.nodes.update(previo.id, {
-          text: evento.text,
-          schedule: evento.schedule,
-          externalCalendar: evento.calendar,
-          deletedAt: null,
-          updatedAt: ahora,
-        });
-        actualizados += 1;
-      }
-    }
-
-    const desaparecidos = existentes.filter(
-      (nodo) =>
-        alcance(nodo) &&
-        nodo.deletedAt === null &&
-        !vistos.has(nodo.externalId as string) &&
-        nodo.schedule !== null &&
-        nodo.schedule.start >= ventana.desde &&
-        nodo.schedule.start < ventana.hasta,
-    );
-
-    await borrarSubarboles(desaparecidos, ahora);
-
-    return { creados, actualizados, eliminados: desaparecidos.length };
+      await db.nodes.bulkPut(plan.cambiados);
+      await db.nodes.bulkAdd(plan.nuevos);
+      return plan.resultado;
+    });
   },
 
   async countBySource(source: NodeSource): Promise<number> {
@@ -400,10 +489,13 @@ export const nodesRepo = {
     alcance: AlcanceExterno = todoElOrigen,
   ): Promise<number> {
     const ahora = ahoraIso();
-    const objetivos = (await db.nodes.toArray()).filter(
-      (nodo) => nodo.source === source && nodo.deletedAt === null && alcance(nodo),
-    );
-    await borrarSubarboles(objetivos, ahora);
-    return objetivos.length;
+    return db.transaction('rw', db.nodes, async () => {
+      const todos = await db.nodes.toArray();
+      const objetivos = todos.filter(
+        (nodo) => nodo.source === source && nodo.deletedAt === null && alcance(nodo),
+      );
+      await marcarBorrados(subarbolesVivos(todos, objetivos), ahora);
+      return objetivos.length;
+    });
   },
 };

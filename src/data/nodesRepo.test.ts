@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildSchedule } from '@/test/factories';
 import { activityRepo } from './activityRepo';
 import { db } from './db';
@@ -361,5 +361,64 @@ describe('nodesRepo: subárboles de eventos externos', () => {
     await nodesRepo.syncExternal('ics', [evento('a:1')], VENTANA);
 
     expect((await db.nodes.get(externo.id))?.deletedAt).toBeNull();
+  });
+});
+
+describe('nodesRepo.syncExternal en lote', () => {
+  const VENTANA = { desde: '2026-08-01T00:00:00.000Z', hasta: '2026-09-01T00:00:00.000Z' };
+  const HORARIO = buildSchedule('2026-08-13T14:00:00.000Z', 60);
+  // Umbral holgado: una relectura por evento tardaba ~12 s con 2000; en lote, ~150 ms.
+  const UMBRAL_DOS_MIL_MS = 5000;
+
+  function evento(externalId: string, text = externalId) {
+    return { externalId, text, schedule: HORARIO, calendar: null };
+  }
+
+  function eventos(cantidad: number) {
+    return Array.from({ length: cantidad }, (_, indice) => evento(`a:${indice}`));
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('sincroniza 2000 eventos nuevos por debajo del umbral y con órdenes únicos y crecientes', async () => {
+    await nodesRepo.create({ text: 'Idea propia' });
+
+    const inicio = performance.now();
+    const resultado = await nodesRepo.syncExternal('ics', eventos(2000), VENTANA);
+    const duracion = performance.now() - inicio;
+
+    expect(resultado.creados).toBe(2000);
+    expect(duracion).toBeLessThan(UMBRAL_DOS_MIL_MS);
+    const raices = (await db.nodes.toArray()).sort((a, b) => (a.order < b.order ? -1 : 1));
+    expect(new Set(raices.map((nodo) => nodo.order)).size).toBe(2001);
+    expect(raices.map((nodo) => nodo.text)).toEqual(['Idea propia', ...eventos(2000).map((e) => e.text)]);
+  }, 60_000);
+
+  it('si falla la escritura de los nuevos no deja nada a medias', async () => {
+    await nodesRepo.syncExternal('ics', [evento('a:viejo'), evento('a:cambia')], VENTANA);
+    vi.spyOn(db.nodes, 'bulkAdd').mockRejectedValue(new Error('disco lleno'));
+
+    await expect(
+      nodesRepo.syncExternal('ics', [evento('a:cambia', 'Nuevo título'), evento('a:nuevo')], VENTANA),
+    ).rejects.toThrow('disco lleno');
+
+    const nodos = await db.nodes.toArray();
+    expect(nodos.map((nodo) => nodo.externalId).sort()).toEqual(['a:cambia', 'a:viejo']);
+    expect(nodos.every((nodo) => nodo.deletedAt === null)).toBe(true);
+    expect(nodos.find((nodo) => nodo.externalId === 'a:cambia')?.text).toBe('a:cambia');
+  });
+
+  it('agrega los nuevos después de un evento revivido en la misma sincronización', async () => {
+    await nodesRepo.syncExternal('ics', [evento('a:1')], VENTANA);
+    await nodesRepo.syncExternal('ics', [], VENTANA);
+
+    await nodesRepo.syncExternal('ics', [evento('a:1'), evento('a:2')], VENTANA);
+
+    const nodos = await db.nodes.toArray();
+    const [revivido, nuevo] = ['a:1', 'a:2'].map((id) => nodos.find((n) => n.externalId === id));
+    expect(revivido?.deletedAt).toBeNull();
+    expect((revivido?.order ?? '') < (nuevo?.order ?? '')).toBe(true);
   });
 });
