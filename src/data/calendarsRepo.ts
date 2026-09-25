@@ -27,10 +27,6 @@ export function ventanaSincronizacion(now = new Date()): { desde: string; hasta:
   };
 }
 
-function dentroDeVentana(evento: IcsEvent, ventana: { desde: string; hasta: string }): boolean {
-  return evento.start < ventana.hasta && evento.end > ventana.desde;
-}
-
 function aEventoExterno(evento: IcsEvent, origen: string, prefijo: string): ExternalEvent {
   const schedule: Schedule = {
     start: evento.start,
@@ -39,11 +35,17 @@ function aEventoExterno(evento: IcsEvent, origen: string, prefijo: string): Exte
   };
 
   return {
-    externalId: `${prefijo}:${evento.uid}`,
+    externalId: `${prefijo}:${claveExterna(evento)}`,
     text: evento.summary || '(sin título)',
     schedule,
     calendar: origen,
   };
+}
+
+// Cada repetición de una serie es un nodo propio: se identifica por su inicio
+// original para que moverla en el origen no le cambie la clave.
+function claveExterna(evento: IcsEvent): string {
+  return evento.recurrenceId === null ? evento.uid : `${evento.uid}@${evento.recurrenceId}`;
 }
 
 function eventosDelIcs(
@@ -52,9 +54,7 @@ function eventosDelIcs(
   origen: string,
   prefijo: string,
 ): ExternalEvent[] {
-  return parseIcs(texto)
-    .filter((evento) => dentroDeVentana(evento, ventana))
-    .map((evento) => aEventoExterno(evento, origen, prefijo));
+  return parseIcs(texto, ventana).map((evento) => aEventoExterno(evento, origen, prefijo));
 }
 
 function esDeArchivo(nodo: LuminaNode): boolean {

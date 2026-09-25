@@ -109,6 +109,70 @@ describe('importarIcs', () => {
     expect(await nodesRepo.countBySource('ics')).toBe(0);
   });
 
+  it('crea una instancia por repetición y reimportar la serie no la duplica', async () => {
+    const semanal = [
+      'BEGIN:VCALENDAR',
+      'BEGIN:VEVENT',
+      'UID:clase@ejemplo.com',
+      'SUMMARY:Clase',
+      'DTSTART:20260803T140000Z',
+      'DTEND:20260803T150000Z',
+      'RRULE:FREQ=WEEKLY;BYDAY=MO,WE;COUNT=4',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const primera = await importarIcs(semanal, 'trabajo.ics', AHORA);
+    const segunda = await importarIcs(semanal, 'trabajo.ics', AHORA);
+
+    expect(primera.creados).toBe(4);
+    expect(segunda).toEqual({ creados: 0, actualizados: 0, eliminados: 0 });
+    const ids = (await db.nodes.toArray()).map((nodo) => nodo.externalId).sort();
+    expect(ids).toEqual([
+      'archivo:clase@ejemplo.com@2026-08-03T14:00:00.000Z',
+      'archivo:clase@ejemplo.com@2026-08-05T14:00:00.000Z',
+      'archivo:clase@ejemplo.com@2026-08-10T14:00:00.000Z',
+      'archivo:clase@ejemplo.com@2026-08-12T14:00:00.000Z',
+    ]);
+  });
+
+  it('una repetición movida en el origen conserva su nodo y sus subtareas', async () => {
+    const diaria = (...extra: string[]) =>
+      [
+        'BEGIN:VCALENDAR',
+        'BEGIN:VEVENT',
+        'UID:diaria',
+        'SUMMARY:Pausa',
+        'DTSTART:20260813T140000Z',
+        'RRULE:FREQ=DAILY;COUNT=2',
+        'END:VEVENT',
+        ...extra,
+        'END:VCALENDAR',
+      ].join('\r\n');
+    await importarIcs(diaria(), 'trabajo.ics', AHORA);
+    const nodos = await db.nodes.toArray();
+    const segunda = nodos.find((nodo) => nodo.externalId === 'archivo:diaria@2026-08-14T14:00:00.000Z');
+    const id = segunda?.id as string;
+    await nodesRepo.create({ text: 'Estirar', parentId: id });
+
+    const resultado = await importarIcs(
+      diaria(
+        'BEGIN:VEVENT',
+        'UID:diaria',
+        'RECURRENCE-ID:20260814T140000Z',
+        'SUMMARY:Pausa',
+        'DTSTART:20260814T170000Z',
+        'END:VEVENT',
+      ),
+      'trabajo.ics',
+      AHORA,
+    );
+
+    expect(resultado).toEqual({ creados: 0, actualizados: 1, eliminados: 0 });
+    expect((await db.nodes.get(id))?.schedule?.start).toBe('2026-08-14T17:00:00.000Z');
+    expect((await nodesRepo.listSubtree(id)).map((n) => n.text)).toEqual(['Estirar']);
+  });
+
   it('ignora los eventos fuera de la ventana sincronizada', async () => {
     const lejano = ics([
       { uid: 'lejano', titulo: 'Muy adelante', inicio: '20280101T140000Z', fin: '20280101T150000Z' },

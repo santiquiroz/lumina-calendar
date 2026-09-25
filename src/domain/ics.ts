@@ -1,9 +1,17 @@
+import { diaCivil, diasDeLaRegla, fechaCivil, parseRrule, type ReglaRecurrencia } from './rrule';
+
 export interface IcsEvent {
   uid: string;
   summary: string;
   start: string;
   end: string;
   allDay: boolean;
+  recurrenceId: string | null;
+}
+
+export interface VentanaIcs {
+  desde: string;
+  hasta: string;
 }
 
 interface ContentLine {
@@ -15,6 +23,9 @@ interface ContentLine {
 interface IcsMoment {
   ms: number;
   dateOnly: boolean;
+  partes: number[];
+  esUtc: boolean;
+  zona: string | undefined;
 }
 
 interface VeventBlock {
@@ -22,22 +33,53 @@ interface VeventBlock {
   fin: number;
 }
 
+interface VeventBase {
+  uid: string;
+  summary: string;
+  inicio: IcsMoment;
+  finMs: number;
+}
+
+interface Serie {
+  base: VeventBase;
+  regla: ReglaRecurrencia;
+  omitidas: Set<string>;
+  pasaDelFinal: (instancia: IcsMoment) => boolean;
+}
+
+interface Limites {
+  desdeMs: number;
+  hastaMs: number;
+}
+
 const MS_SEGUNDO = 1_000;
 const MS_MINUTO = 60 * MS_SEGUNDO;
 const MS_HORA = 60 * MS_MINUTO;
 const MS_DIA = 24 * MS_HORA;
+const TOPE_INSTANCIAS_POR_SERIE = 1_000;
+const SIN_LIMITES: Limites = { desdeMs: -Infinity, hastaMs: Infinity };
 
 const PATRON_FECHA = /^(\d{4})(\d{2})(\d{2})$/;
 const PATRON_FECHA_HORA = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z?)$/;
 const PATRON_DURACION = /^([+-])?P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/;
 const PATRON_ESCAPE = /\\([\\;,nN])/g;
 
-export function parseIcs(texto: string): IcsEvent[] {
-  return extractVevents(readContentLines(texto)).map(buildEvent).filter(esEvento);
+export function parseIcs(texto: string, ventana?: VentanaIcs): IcsEvent[] {
+  const bloques = extractVevents(readContentLines(texto));
+  const reemplazadas = instanciasReemplazadas(bloques);
+  const limites = ventana === undefined ? SIN_LIMITES : limitesDe(ventana);
+
+  return bloques
+    .flatMap((propiedades) => eventosDelBloque(propiedades, reemplazadas, limites))
+    .filter((evento) => seSolapa(evento, limites));
 }
 
-function esEvento(evento: IcsEvent | null): evento is IcsEvent {
-  return evento !== null;
+function limitesDe(ventana: VentanaIcs): Limites {
+  return { desdeMs: Date.parse(ventana.desde), hastaMs: Date.parse(ventana.hasta) };
+}
+
+function seSolapa(evento: IcsEvent, limites: Limites): boolean {
+  return Date.parse(evento.start) < limites.hastaMs && Date.parse(evento.end) > limites.desdeMs;
 }
 
 function readContentLines(texto: string): ContentLine[] {
@@ -165,10 +207,46 @@ function readVevent(lineas: ContentLine[], desde: number): VeventBlock {
   return { propiedades, fin: lineas.length };
 }
 
-function buildEvent(propiedades: ContentLine[]): IcsEvent | null {
-  if (estaDescartado(propiedades)) return null;
+// Una instancia con RECURRENCE-ID (movida o cancelada) ocupa el lugar de la
+// que la regla habría generado; se junta antes de expandir porque puede venir
+// en cualquier parte del archivo.
+function instanciasReemplazadas(bloques: ContentLine[][]): Map<string, Set<string>> {
+  const porUid = new Map<string, Set<string>>();
+  for (const propiedades of bloques) {
+    const original = momentoOriginal(propiedades);
+    if (original === null) continue;
+    const uid = leerUid(propiedades);
+    porUid.set(uid, (porUid.get(uid) ?? new Set<string>()).add(claveDeInstancia(original)));
+  }
+  return porUid;
+}
 
-  const uid = firstValue(propiedades, 'UID').trim();
+function momentoOriginal(propiedades: ContentLine[]): IcsMoment | null {
+  const linea = firstLine(propiedades, 'RECURRENCE-ID');
+  return linea === null ? null : parseMoment(linea);
+}
+
+function eventosDelBloque(
+  propiedades: ContentLine[],
+  reemplazadas: Map<string, Set<string>>,
+  limites: Limites,
+): IcsEvent[] {
+  const base = readBase(propiedades);
+  if (base === null || estaCancelado(propiedades)) return [];
+
+  if (esReemplazo(propiedades)) return instanciaReemplazo(propiedades, base);
+
+  const serie = readSerie(propiedades, base, reemplazadas.get(base.uid));
+  if (serie === null) return [buildEvent(base, base.inicio, base.finMs, null)];
+  return expandirSerie(serie, limites);
+}
+
+function esReemplazo(propiedades: ContentLine[]): boolean {
+  return firstLine(propiedades, 'RECURRENCE-ID') !== null;
+}
+
+function readBase(propiedades: ContentLine[]): VeventBase | null {
+  const uid = leerUid(propiedades);
   const inicioLinea = firstLine(propiedades, 'DTSTART');
   if (uid === '' || inicioLinea === null) return null;
 
@@ -176,17 +254,173 @@ function buildEvent(propiedades: ContentLine[]): IcsEvent | null {
   if (inicio === null) return null;
 
   return {
-    uid: unescapeText(uid),
+    uid,
     summary: unescapeText(firstValue(propiedades, 'SUMMARY').trim()),
-    start: new Date(inicio.ms).toISOString(),
-    end: new Date(resolveEnd(propiedades, inicio)).toISOString(),
-    allDay: inicio.dateOnly,
+    inicio,
+    finMs: resolveEnd(propiedades, inicio),
   };
 }
 
-function estaDescartado(propiedades: ContentLine[]): boolean {
-  if (firstLine(propiedades, 'RECURRENCE-ID') !== null) return true;
+function leerUid(propiedades: ContentLine[]): string {
+  return unescapeText(firstValue(propiedades, 'UID').trim());
+}
+
+function buildEvent(
+  base: VeventBase,
+  inicio: IcsMoment,
+  finMs: number,
+  recurrenceId: string | null,
+): IcsEvent {
+  return {
+    uid: base.uid,
+    summary: base.summary,
+    start: new Date(inicio.ms).toISOString(),
+    end: new Date(finMs).toISOString(),
+    allDay: inicio.dateOnly,
+    recurrenceId,
+  };
+}
+
+function estaCancelado(propiedades: ContentLine[]): boolean {
   return firstValue(propiedades, 'STATUS').trim().toUpperCase() === 'CANCELLED';
+}
+
+function instanciaReemplazo(propiedades: ContentLine[], base: VeventBase): IcsEvent[] {
+  const original = momentoOriginal(propiedades);
+  if (original === null) return [];
+  return [buildEvent(base, base.inicio, base.finMs, claveDeInstancia(original))];
+}
+
+// Los eventos de todo el día se identifican por su fecha civil y no por un
+// instante: así la clave no cambia si el dispositivo cambia de zona horaria.
+function claveDeInstancia(momento: IcsMoment): string {
+  if (!momento.dateOnly) return new Date(momento.ms).toISOString();
+  const [anio, mes, dia] = momento.partes;
+  return `${String(anio).padStart(4, '0')}-${dosCifras(mes)}-${dosCifras(dia)}`;
+}
+
+function dosCifras(valor: number): string {
+  return String(valor).padStart(2, '0');
+}
+
+function readSerie(
+  propiedades: ContentLine[],
+  base: VeventBase,
+  reemplazadas: Set<string> = new Set(),
+): Serie | null {
+  const linea = firstLine(propiedades, 'RRULE');
+  const regla = linea === null ? null : parseRrule(linea.value);
+  if (regla === null) return null;
+
+  const pasaDelFinal = finalDeLaRegla(regla, base.inicio);
+  if (pasaDelFinal === null) return null;
+
+  const omitidas = new Set([...fechasExcluidas(propiedades), ...reemplazadas]);
+  return { base, regla, omitidas, pasaDelFinal };
+}
+
+// Un UNTIL sin zona se lee en la zona de DTSTART; uno de solo fecha incluye
+// ese día completo.
+function finalDeLaRegla(
+  regla: ReglaRecurrencia,
+  inicio: IcsMoment,
+): ((instancia: IcsMoment) => boolean) | null {
+  if (regla.hasta === null) return () => false;
+
+  const hasta = parseMoment({
+    name: 'UNTIL',
+    params: parametrosDeZona(inicio),
+    value: regla.hasta,
+  });
+  if (hasta === null) return null;
+  if (!hasta.dateOnly) return (instancia) => instancia.ms > hasta.ms;
+
+  const ultimoDia = diaDe(hasta);
+  return (instancia) => diaDe(instancia) > ultimoDia;
+}
+
+function parametrosDeZona(momento: IcsMoment): Map<string, string> {
+  return momento.zona === undefined ? new Map() : new Map([['TZID', momento.zona]]);
+}
+
+function fechasExcluidas(propiedades: ContentLine[]): string[] {
+  return propiedades
+    .filter((linea) => linea.name === 'EXDATE')
+    .flatMap((linea) =>
+      linea.value.split(',').map((valor) => parseMoment({ ...linea, value: valor })),
+    )
+    .filter((momento): momento is IcsMoment => momento !== null)
+    .map(claveDeInstancia);
+}
+
+function expandirSerie(serie: Serie, limites: Limites): IcsEvent[] {
+  const eventos: IcsEvent[] = [];
+
+  for (const inicio of iniciosDeLaSerie(serie, limites.hastaMs)) {
+    const clave = claveDeInstancia(inicio);
+    if (serie.omitidas.has(clave)) continue;
+
+    const evento = buildEvent(serie.base, inicio, finDeInstancia(serie.base, inicio), clave);
+    if (!seSolapa(evento, limites)) continue;
+
+    eventos.push(evento);
+    if (eventos.length >= TOPE_INSTANCIAS_POR_SERIE) break;
+  }
+
+  return eventos;
+}
+
+// COUNT se cuenta desde DTSTART, también con las instancias que quedan antes
+// de la ventana o que EXDATE quita después.
+function* iniciosDeLaSerie(serie: Serie, hastaMs: number): Generator<IcsMoment> {
+  const conteo = serie.regla.conteo ?? Infinity;
+  let generadas = 0;
+
+  for (const dia of diasDeLaSerie(serie.regla, serie.base.inicio, limiteDia(hastaMs))) {
+    const inicio = trasladar(serie.base.inicio, dia);
+    if (generadas >= conteo || serie.pasaDelFinal(inicio) || inicio.ms >= hastaMs) return;
+    generadas += 1;
+    yield inicio;
+  }
+}
+
+// DTSTART siempre es la primera instancia de la serie, aunque la regla no lo
+// incluya.
+function* diasDeLaSerie(
+  regla: ReglaRecurrencia,
+  inicio: IcsMoment,
+  limite: number,
+): Generator<number> {
+  const inicioDia = diaDe(inicio);
+  yield inicioDia;
+  for (const dia of diasDeLaRegla(regla, inicioDia, limite)) {
+    if (dia > inicioDia) yield dia;
+  }
+}
+
+// Dos días de margen: la fecha civil de una instancia puede ir por delante de
+// la fecha UTC del borde de la ventana según la zona del evento.
+function limiteDia(hastaMs: number): number {
+  return Number.isFinite(hastaMs) ? Math.floor(hastaMs / MS_DIA) + 2 : Infinity;
+}
+
+function diaDe(momento: IcsMoment): number {
+  const [anio, mes, dia] = momento.partes;
+  return diaCivil(anio, mes, dia);
+}
+
+// Se traslada la hora de reloj, no el instante: así una serie de las 9:00
+// sigue a las 9:00 después de un cambio de horario.
+function trasladar(momento: IcsMoment, dia: number): IcsMoment {
+  const partes = [...fechaCivil(dia), ...momento.partes.slice(3)];
+  const ms = momento.dateOnly ? localMs(partes) : absoluteMs(partes, momento.esUtc, momento.zona);
+  return { ...momento, partes, ms };
+}
+
+function finDeInstancia(base: VeventBase, inicio: IcsMoment): number {
+  if (!inicio.dateOnly) return inicio.ms + (base.finMs - base.inicio.ms);
+  const dias = Math.round((base.finMs - base.inicio.ms) / MS_DIA);
+  return trasladar(inicio, diaDe(inicio) + dias).ms;
 }
 
 function firstLine(propiedades: ContentLine[], nombre: string): ContentLine | null {
@@ -243,13 +477,14 @@ function parseMoment(linea: ContentLine): IcsMoment | null {
 function dateOnlyMoment(campos: RegExpExecArray): IcsMoment | null {
   const partes = [Number(campos[1]), Number(campos[2]), Number(campos[3]), 0, 0, 0];
   if (!esFechaValida(partes)) return null;
-  return { ms: localMs(partes), dateOnly: true };
+  return { ms: localMs(partes), dateOnly: true, partes, esUtc: false, zona: undefined };
 }
 
 function timedMoment(campos: RegExpExecArray, zona: string | undefined): IcsMoment | null {
   const partes = campos.slice(1, 7).map(Number);
   if (!esFechaValida(partes)) return null;
-  return { ms: absoluteMs(partes, campos[7] === 'Z', zona), dateOnly: false };
+  const esUtc = campos[7] === 'Z';
+  return { ms: absoluteMs(partes, esUtc, zona), dateOnly: false, partes, esUtc, zona };
 }
 
 function absoluteMs(partes: number[], esUtc: boolean, zona: string | undefined): number {

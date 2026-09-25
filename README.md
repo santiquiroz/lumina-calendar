@@ -116,10 +116,17 @@ pero **tus subtareas se conservan**; si el evento desaparece del origen,
 desaparece de Lumina. Si la fuente no responde, no se borra nada: una caída de
 red no puede leerse como "ya no hay eventos".
 
-Un límite conocido de las dos vías `.ics`: **los eventos repetidos entran solo
-una vez**, porque Lumina todavía no interpreta reglas de recurrencia. Los
-calendarios del teléfono no tienen ese problema, porque Android entrega las
-repeticiones ya expandidas. Si vivís de eventos que se repiten, usá esa vía.
+Las dos vías `.ics` **expanden los eventos que se repiten** dentro de la ventana
+que Lumina sincroniza (un mes atrás y seis meses adelante), con un tope de mil
+repeticiones por serie. Entienden repeticiones diarias, semanales, mensuales y
+anuales, cada cuántos días, semanas, meses o años, con una cantidad o una fecha
+final, en días de la semana (también «el segundo martes» o «el último viernes»)
+o en días del mes, respetando la zona horaria y los cambios de horario. Una
+fecha que quitaste de la serie no aparece, y una repetición que moviste aparece
+en su nuevo horario sin perder sus subtareas. Una regla que Lumina todavía no
+interpreta (por ejemplo, cada hora o la posición `BYSETPOS` que usa Outlook)
+entra como un solo evento; si te pasa, la vía de los calendarios del teléfono
+entrega esas repeticiones ya expandidas.
 
 ## Avisos con la app cerrada
 

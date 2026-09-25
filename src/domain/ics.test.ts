@@ -533,7 +533,7 @@ describe('parseIcs — eventos descartados', () => {
     expect(parseIcs(texto)).toEqual([]);
   });
 
-  it('descarta el evento con RECURRENCE-ID', () => {
+  it('conserva como instancia propia el evento con RECURRENCE-ID', () => {
     const texto = ics(
       'BEGIN:VEVENT',
       'UID:serie-1',
@@ -543,7 +543,16 @@ describe('parseIcs — eventos descartados', () => {
       'END:VEVENT',
     );
 
-    expect(parseIcs(texto)).toEqual([]);
+    expect(parseIcs(texto)).toEqual([
+      {
+        uid: 'serie-1',
+        summary: 'Instancia movida',
+        start: '2026-08-12T16:00:00.000Z',
+        end: '2026-08-12T17:00:00.000Z',
+        allDay: false,
+        recurrenceId: '2026-08-12T14:00:00.000Z',
+      },
+    ]);
   });
 
   it('descarta el evento con STATUS:CANCELLED', () => {
@@ -591,12 +600,24 @@ describe('parseIcs — entradas inválidas', () => {
 });
 
 describe('parseIcs — archivo real de Google Calendar', () => {
-  it('extrae solo los tres eventos vigentes', () => {
+  it('extrae los eventos vigentes, incluida la instancia movida, y omite el cancelado', () => {
     expect(parseIcs(CALENDARIO_GOOGLE).map((evento) => evento.uid)).toEqual([
       '1a2b3c@google.com',
       '4d5e6f@google.com',
       '7g8h9i@google.com',
+      '1a2b3c@google.com',
     ]);
+  });
+
+  it('ubica la instancia movida en su nuevo horario', () => {
+    const movida = parseIcs(CALENDARIO_GOOGLE)[3];
+
+    expect(movida).toMatchObject({
+      summary: 'Reunión de equipo (movida)',
+      start: '2026-08-18T16:00:00.000Z',
+      end: '2026-08-18T17:00:00.000Z',
+      recurrenceId: '2026-08-18T14:00:00.000Z',
+    });
   });
 
   it('convierte las horas de America/Bogota a UTC', () => {
@@ -626,5 +647,327 @@ describe('parseIcs — archivo real de Google Calendar', () => {
     );
     expect(sesion.start).toBe('2026-08-16T19:00:00.000Z');
     expect(sesion.end).toBe('2026-08-16T20:30:00.000Z');
+  });
+});
+
+function serie(...propiedades: string[]): string {
+  return ics('BEGIN:VCALENDAR', 'BEGIN:VEVENT', ...propiedades, 'END:VEVENT', 'END:VCALENDAR');
+}
+
+function inicios(texto: string, ventana?: { desde: string; hasta: string }): string[] {
+  return parseIcs(texto, ventana).map((evento) => evento.start);
+}
+
+const AGOSTO = { desde: '2026-08-01T00:00:00.000Z', hasta: '2026-09-01T00:00:00.000Z' };
+const HASTA_FIN_DE_ANIO = { desde: '2026-08-01T00:00:00.000Z', hasta: '2027-01-01T00:00:00.000Z' };
+
+describe('parseIcs — series repetidas', () => {
+  it('expande una serie semanal BYDAY=MO,WE con COUNT=4 en sus fechas', () => {
+    const texto = serie(
+      'UID:semanal',
+      'DTSTART:20260803T140000Z',
+      'DTEND:20260803T150000Z',
+      'RRULE:FREQ=WEEKLY;BYDAY=MO,WE;COUNT=4',
+    );
+
+    const eventos = parseIcs(texto, AGOSTO);
+
+    expect(eventos.map((evento) => evento.start)).toEqual([
+      '2026-08-03T14:00:00.000Z',
+      '2026-08-05T14:00:00.000Z',
+      '2026-08-10T14:00:00.000Z',
+      '2026-08-12T14:00:00.000Z',
+    ]);
+    expect(eventos.map((evento) => evento.end)).toEqual([
+      '2026-08-03T15:00:00.000Z',
+      '2026-08-05T15:00:00.000Z',
+      '2026-08-10T15:00:00.000Z',
+      '2026-08-12T15:00:00.000Z',
+    ]);
+    expect(eventos.every((evento) => evento.uid === 'semanal')).toBe(true);
+  });
+
+  it('identifica cada instancia por su inicio original y deja sin identificador el evento único', () => {
+    const texto = ics(
+      'BEGIN:VEVENT',
+      'UID:serie',
+      'DTSTART:20260803T140000Z',
+      'RRULE:FREQ=DAILY;COUNT=2',
+      'END:VEVENT',
+      'BEGIN:VEVENT',
+      'UID:unico',
+      'DTSTART:20260803T160000Z',
+      'END:VEVENT',
+    );
+
+    expect(parseIcs(texto, AGOSTO).map((evento) => evento.recurrenceId)).toEqual([
+      '2026-08-03T14:00:00.000Z',
+      '2026-08-04T14:00:00.000Z',
+      null,
+    ]);
+  });
+
+  it('respeta UNTIL como último inicio posible', () => {
+    const texto = serie(
+      'UID:hasta',
+      'DTSTART:20260803T140000Z',
+      'RRULE:FREQ=DAILY;UNTIL=20260805T140000Z',
+    );
+
+    expect(inicios(texto, AGOSTO)).toEqual([
+      '2026-08-03T14:00:00.000Z',
+      '2026-08-04T14:00:00.000Z',
+      '2026-08-05T14:00:00.000Z',
+    ]);
+  });
+
+  it('toma un UNTIL de solo fecha como el día completo', () => {
+    const texto = serie(
+      'UID:hasta-fecha',
+      'DTSTART;TZID=America/Bogota:20260803T090000',
+      'RRULE:FREQ=DAILY;UNTIL=20260804',
+    );
+
+    expect(inicios(texto, AGOSTO)).toEqual([
+      '2026-08-03T14:00:00.000Z',
+      '2026-08-04T14:00:00.000Z',
+    ]);
+  });
+
+  it('quita las instancias listadas en EXDATE, que igual cuentan para COUNT', () => {
+    const texto = serie(
+      'UID:excepciones',
+      'DTSTART;TZID=America/Bogota:20260803T090000',
+      'RRULE:FREQ=DAILY;COUNT=4',
+      'EXDATE;TZID=America/Bogota:20260804T090000,20260806T090000',
+    );
+
+    expect(inicios(texto, AGOSTO)).toEqual([
+      '2026-08-03T14:00:00.000Z',
+      '2026-08-05T14:00:00.000Z',
+    ]);
+  });
+
+  it('una instancia con RECURRENCE-ID reemplaza a la original y conserva su identificador', () => {
+    const texto = ics(
+      'BEGIN:VEVENT',
+      'UID:movida',
+      'DTSTART:20260803T140000Z',
+      'DTEND:20260803T150000Z',
+      'SUMMARY:Clase',
+      'RRULE:FREQ=WEEKLY;COUNT=3',
+      'END:VEVENT',
+      'BEGIN:VEVENT',
+      'UID:movida',
+      'RECURRENCE-ID:20260810T140000Z',
+      'DTSTART:20260811T160000Z',
+      'DTEND:20260811T170000Z',
+      'SUMMARY:Clase (cambio de día)',
+      'END:VEVENT',
+    );
+
+    const eventos = parseIcs(texto, AGOSTO);
+
+    expect(eventos.map((evento) => [evento.start, evento.summary, evento.recurrenceId])).toEqual([
+      ['2026-08-03T14:00:00.000Z', 'Clase', '2026-08-03T14:00:00.000Z'],
+      ['2026-08-17T14:00:00.000Z', 'Clase', '2026-08-17T14:00:00.000Z'],
+      ['2026-08-11T16:00:00.000Z', 'Clase (cambio de día)', '2026-08-10T14:00:00.000Z'],
+    ]);
+  });
+
+  it('una instancia cancelada con RECURRENCE-ID desaparece de la serie', () => {
+    const texto = ics(
+      'BEGIN:VEVENT',
+      'UID:cancelada',
+      'DTSTART:20260803T140000Z',
+      'RRULE:FREQ=DAILY;COUNT=3',
+      'END:VEVENT',
+      'BEGIN:VEVENT',
+      'UID:cancelada',
+      'RECURRENCE-ID:20260804T140000Z',
+      'DTSTART:20260804T140000Z',
+      'STATUS:CANCELLED',
+      'END:VEVENT',
+    );
+
+    expect(inicios(texto, AGOSTO)).toEqual([
+      '2026-08-03T14:00:00.000Z',
+      '2026-08-05T14:00:00.000Z',
+    ]);
+  });
+
+  it('conserva la hora local de una serie diaria en America/New_York al cambiar el horario', () => {
+    const texto = serie(
+      'UID:nueva-york',
+      'DTSTART;TZID=America/New_York:20261030T090000',
+      'DTEND;TZID=America/New_York:20261030T100000',
+      'RRULE:FREQ=DAILY;COUNT=4',
+    );
+
+    const eventos = parseIcs(texto, HASTA_FIN_DE_ANIO);
+
+    expect(eventos.map((evento) => evento.start)).toEqual([
+      '2026-10-30T13:00:00.000Z',
+      '2026-10-31T13:00:00.000Z',
+      '2026-11-01T14:00:00.000Z',
+      '2026-11-02T14:00:00.000Z',
+    ]);
+    expect(eventos[2].end).toBe('2026-11-01T15:00:00.000Z');
+  });
+
+  it('corta una serie sin fin en el borde de la ventana', () => {
+    const texto = serie('UID:infinita', 'DTSTART:20260101T140000Z', 'RRULE:FREQ=DAILY');
+
+    const resultado = inicios(texto, {
+      desde: '2026-08-01T00:00:00.000Z',
+      hasta: '2026-08-11T00:00:00.000Z',
+    });
+
+    expect(resultado).toHaveLength(10);
+    expect(resultado[0]).toBe('2026-08-01T14:00:00.000Z');
+    expect(resultado[9]).toBe('2026-08-10T14:00:00.000Z');
+  });
+
+  it('no entrega más de mil instancias por serie', () => {
+    const texto = serie('UID:sin-ventana', 'DTSTART:20260101T140000Z', 'RRULE:FREQ=DAILY');
+
+    expect(parseIcs(texto)).toHaveLength(1000);
+  });
+
+  it('cuenta COUNT desde DTSTART aunque las instancias queden antes de la ventana', () => {
+    const texto = serie('UID:vieja', 'DTSTART:20260701T140000Z', 'RRULE:FREQ=DAILY;COUNT=5');
+
+    expect(inicios(texto, AGOSTO)).toEqual([]);
+  });
+
+  it('deja fuera de la ventana también a los eventos sin repetición', () => {
+    const texto = serie('UID:lejano', 'DTSTART:20280101T140000Z');
+
+    expect(inicios(texto, AGOSTO)).toEqual([]);
+  });
+
+  it('avanza de a INTERVAL semanas contadas desde WKST', () => {
+    const texto = serie(
+      'UID:quincenal',
+      'DTSTART:20260803T140000Z',
+      'RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,TH;WKST=SU',
+    );
+
+    expect(inicios(texto, AGOSTO)).toEqual([
+      '2026-08-03T14:00:00.000Z',
+      '2026-08-06T14:00:00.000Z',
+      '2026-08-17T14:00:00.000Z',
+      '2026-08-20T14:00:00.000Z',
+      '2026-08-31T14:00:00.000Z',
+    ]);
+  });
+
+  it('entiende el ordinal de BYDAY en una serie mensual', () => {
+    const texto = serie(
+      'UID:segundo-martes',
+      'DTSTART:20260811T140000Z',
+      'RRULE:FREQ=MONTHLY;BYDAY=2TU,-1FR;COUNT=4',
+    );
+
+    expect(inicios(texto, HASTA_FIN_DE_ANIO)).toEqual([
+      '2026-08-11T14:00:00.000Z',
+      '2026-08-28T14:00:00.000Z',
+      '2026-09-08T14:00:00.000Z',
+      '2026-09-25T14:00:00.000Z',
+    ]);
+  });
+
+  it('salta los meses que no tienen el día pedido en BYMONTHDAY', () => {
+    const texto = serie(
+      'UID:dia-31',
+      'DTSTART:20260831T140000Z',
+      'RRULE:FREQ=MONTHLY;BYMONTHDAY=31;COUNT=3',
+    );
+
+    expect(inicios(texto, { desde: '2026-08-01T00:00:00.000Z', hasta: '2027-06-01T00:00:00.000Z' })).toEqual([
+      '2026-08-31T14:00:00.000Z',
+      '2026-10-31T14:00:00.000Z',
+      '2026-12-31T14:00:00.000Z',
+    ]);
+  });
+
+  it('cuenta BYMONTHDAY negativo desde el final del mes', () => {
+    const texto = serie(
+      'UID:ultimo-dia',
+      'DTSTART:20260831T140000Z',
+      'RRULE:FREQ=MONTHLY;BYMONTHDAY=-1;COUNT=3',
+    );
+
+    expect(inicios(texto, HASTA_FIN_DE_ANIO)).toEqual([
+      '2026-08-31T14:00:00.000Z',
+      '2026-09-30T14:00:00.000Z',
+      '2026-10-31T14:00:00.000Z',
+    ]);
+  });
+
+  it('repite cada año en la misma fecha, también con BYMONTH', () => {
+    const cumple = serie('UID:cumple', 'DTSTART;VALUE=DATE:20200814', 'RRULE:FREQ=YEARLY');
+    const outlook = serie(
+      'UID:outlook',
+      'DTSTART:20200814T140000Z',
+      'RRULE:FREQ=YEARLY;BYMONTH=8;BYMONTHDAY=14',
+    );
+
+    const [evento] = parseIcs(cumple, AGOSTO);
+
+    expect(evento.allDay).toBe(true);
+    expect(evento.recurrenceId).toBe('2026-08-14');
+    expect(partesLocales(evento.start)).toMatchObject({ anio: 2026, mes: 8, dia: 14, hora: 0 });
+    expect(partesLocales(evento.end)).toMatchObject({ anio: 2026, mes: 8, dia: 15, hora: 0 });
+    expect(inicios(outlook, AGOSTO)).toEqual(['2026-08-14T14:00:00.000Z']);
+  });
+
+  it('entiende el ordinal de BYDAY dentro del año', () => {
+    const texto = serie('UID:primer-lunes', 'DTSTART:20260105T140000Z', 'RRULE:FREQ=YEARLY;BYDAY=1MO');
+
+    expect(inicios(texto, { desde: '2026-12-01T00:00:00.000Z', hasta: '2027-12-01T00:00:00.000Z' })).toEqual([
+      '2027-01-04T14:00:00.000Z',
+    ]);
+  });
+
+  it('filtra una serie diaria con BYDAY y BYMONTH', () => {
+    const texto = serie(
+      'UID:laborables',
+      'DTSTART:20260828T140000Z',
+      'RRULE:FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR;BYMONTH=8',
+    );
+
+    expect(inicios(texto, HASTA_FIN_DE_ANIO)).toEqual([
+      '2026-08-28T14:00:00.000Z',
+      '2026-08-31T14:00:00.000Z',
+    ]);
+  });
+
+  it('trata como evento único una regla que Lumina todavía no interpreta', () => {
+    const porHora = serie('UID:por-hora', 'DTSTART:20260803T140000Z', 'RRULE:FREQ=HOURLY;COUNT=3');
+    const conPosicion = serie(
+      'UID:con-posicion',
+      'DTSTART:20260803T140000Z',
+      'RRULE:FREQ=MONTHLY;BYDAY=MO,TU;BYSETPOS=-1',
+    );
+    const ilegible = serie('UID:ilegible', 'DTSTART:20260803T140000Z', 'RRULE:FREQ=DAILY;UNTIL=pronto');
+
+    for (const texto of [porHora, conPosicion, ilegible]) {
+      expect(parseIcs(texto, AGOSTO).map((evento) => [evento.start, evento.recurrenceId])).toEqual([
+        ['2026-08-03T14:00:00.000Z', null],
+      ]);
+    }
+  });
+
+  it('muestra la instancia suelta de una serie cuyo evento principal no vino en el archivo', () => {
+    const texto = serie(
+      'UID:invitado-a-una',
+      'RECURRENCE-ID;TZID=America/Bogota:20260818T090000',
+      'DTSTART;TZID=America/Bogota:20260818T110000',
+    );
+
+    expect(parseIcs(texto, AGOSTO).map((evento) => [evento.start, evento.recurrenceId])).toEqual([
+      ['2026-08-18T16:00:00.000Z', '2026-08-18T14:00:00.000Z'],
+    ]);
   });
 });
