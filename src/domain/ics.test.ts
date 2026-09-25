@@ -659,6 +659,7 @@ function inicios(texto: string, ventana?: { desde: string; hasta: string }): str
 }
 
 const AGOSTO = { desde: '2026-08-01T00:00:00.000Z', hasta: '2026-09-01T00:00:00.000Z' };
+const UMBRAL_SERIES_VIEJAS_MS = 1000;
 const HASTA_FIN_DE_ANIO = { desde: '2026-08-01T00:00:00.000Z', hasta: '2027-01-01T00:00:00.000Z' };
 
 describe('parseIcs — series repetidas', () => {
@@ -957,6 +958,56 @@ describe('parseIcs — series repetidas', () => {
         ['2026-08-03T14:00:00.000Z', null],
       ]);
     }
+  });
+
+  it('cuenta COUNT de una serie con TZID que empezó semanas antes de la ventana', () => {
+    const texto = serie(
+      'UID:conteo-con-zona',
+      'DTSTART;TZID=America/New_York:20260701T090000',
+      'RRULE:FREQ=DAILY;COUNT=33',
+    );
+
+    expect(inicios(texto, AGOSTO)).toEqual([
+      '2026-08-01T13:00:00.000Z',
+      '2026-08-02T13:00:00.000Z',
+    ]);
+  });
+
+  it('incluye la instancia larga que empezó antes de la ventana y sigue abierta en ella', () => {
+    const texto = serie(
+      'UID:larga',
+      'DTSTART:20260720T140000Z',
+      'DTEND:20260805T140000Z',
+      'RRULE:FREQ=MONTHLY;COUNT=3',
+    );
+
+    expect(inicios(texto, AGOSTO)).toEqual([
+      '2026-07-20T14:00:00.000Z',
+      '2026-08-20T14:00:00.000Z',
+    ]);
+  });
+
+  it('expande en menos de un segundo veinte series diarias con TZID que empezaron hace años', () => {
+    const texto = ics(
+      'BEGIN:VCALENDAR',
+      ...Array.from({ length: 20 }, (_, indice) => [
+        'BEGIN:VEVENT',
+        `UID:vieja-${indice}`,
+        'DTSTART;TZID=America/New_York:20160104T090000',
+        'DTEND;TZID=America/New_York:20160104T100000',
+        'RRULE:FREQ=DAILY',
+        'END:VEVENT',
+      ]).flat(),
+      'END:VCALENDAR',
+    );
+    const ventana = { desde: '2026-07-01T00:00:00.000Z', hasta: '2027-01-01T00:00:00.000Z' };
+
+    const inicio = performance.now();
+    const eventos = parseIcs(texto, ventana);
+    const duracion = performance.now() - inicio;
+
+    expect(eventos).toHaveLength(20 * 184);
+    expect(duracion).toBeLessThan(UMBRAL_SERIES_VIEJAS_MS);
   });
 
   it('muestra la instancia suelta de una serie cuyo evento principal no vino en el archivo', () => {

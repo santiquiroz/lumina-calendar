@@ -57,6 +57,7 @@ const MS_MINUTO = 60 * MS_SEGUNDO;
 const MS_HORA = 60 * MS_MINUTO;
 const MS_DIA = 24 * MS_HORA;
 const TOPE_INSTANCIAS_POR_SERIE = 1_000;
+const MARGEN_DIAS_VENTANA = 3;
 const SIN_LIMITES: Limites = { desdeMs: -Infinity, hastaMs: Infinity };
 
 const PATRON_FECHA = /^(\d{4})(\d{2})(\d{2})$/;
@@ -356,7 +357,7 @@ function fechasExcluidas(propiedades: ContentLine[]): string[] {
 function expandirSerie(serie: Serie, limites: Limites): IcsEvent[] {
   const eventos: IcsEvent[] = [];
 
-  for (const inicio of iniciosDeLaSerie(serie, limites.hastaMs)) {
+  for (const inicio of iniciosDeLaSerie(serie, limites)) {
     const clave = claveDeInstancia(inicio);
     if (serie.omitidas.has(clave)) continue;
 
@@ -371,17 +372,30 @@ function expandirSerie(serie: Serie, limites: Limites): IcsEvent[] {
 }
 
 // COUNT se cuenta desde DTSTART, también con las instancias que quedan antes
-// de la ventana o que EXDATE quita después.
-function* iniciosDeLaSerie(serie: Serie, hastaMs: number): Generator<IcsMoment> {
+// de la ventana o que EXDATE quita después. Las anteriores a la ventana solo se
+// cuentan: pasarlas a milisegundos con su zona cuesta caro y no se usan.
+function* iniciosDeLaSerie(serie: Serie, limites: Limites): Generator<IcsMoment> {
   const conteo = serie.regla.conteo ?? Infinity;
+  const primerDiaUtil = primerDiaQuePuedeSolaparse(serie.base, limites.desdeMs);
   let generadas = 0;
 
-  for (const dia of diasDeLaSerie(serie.regla, serie.base.inicio, limiteDia(hastaMs))) {
-    const inicio = trasladar(serie.base.inicio, dia);
-    if (generadas >= conteo || serie.pasaDelFinal(inicio) || inicio.ms >= hastaMs) return;
+  for (const dia of diasDeLaSerie(serie.regla, serie.base.inicio, limiteDia(limites.hastaMs))) {
+    if (generadas >= conteo) return;
     generadas += 1;
+    if (dia < primerDiaUtil) continue;
+
+    const inicio = trasladar(serie.base.inicio, dia);
+    if (serie.pasaDelFinal(inicio) || inicio.ms >= limites.hastaMs) return;
     yield inicio;
   }
+}
+
+// Tres días de margen cubren la zona del evento (hasta ±14 h), la hora de
+// inicio dentro del día y un cambio de horario en la duración.
+function primerDiaQuePuedeSolaparse(base: VeventBase, desdeMs: number): number {
+  if (!Number.isFinite(desdeMs)) return -Infinity;
+  const diasDeDuracion = Math.ceil((base.finMs - base.inicio.ms) / MS_DIA);
+  return Math.floor(desdeMs / MS_DIA) - diasDeDuracion - MARGEN_DIAS_VENTANA;
 }
 
 // DTSTART siempre es la primera instancia de la serie, aunque la regla no lo
@@ -533,7 +547,16 @@ function zoneOffsetMs(ms: number, zona: string): number | null {
   return utcMs(readFormattedParts(formateador, ms)) - ms;
 }
 
+// Construir un Intl.DateTimeFormat es caro y una serie lo pide dos veces por
+// instancia; también se recuerda que una zona no existe.
+const formateadoresPorZona = new Map<string, Intl.DateTimeFormat | null>();
+
 function zoneFormatter(zona: string): Intl.DateTimeFormat | null {
+  if (!formateadoresPorZona.has(zona)) formateadoresPorZona.set(zona, crearFormateador(zona));
+  return formateadoresPorZona.get(zona) ?? null;
+}
+
+function crearFormateador(zona: string): Intl.DateTimeFormat | null {
   try {
     return new Intl.DateTimeFormat('en-US', {
       timeZone: zona,
